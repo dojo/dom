@@ -1,0 +1,24 @@
+{
+	"name": "dojo-dom",
+	"description": "DOM Utilities",
+	"keywords": [
+		"dojo",
+		"dojo2"
+	],
+	"authors": [
+	],
+	"main": "main.js",
+	"homepage": "http://dojotoolkit.org/",
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/dojo/dom.git"
+	},
+	"dependencies": {
+	},
+	"ignore": [
+		".*",
+		"test"
+	],
+	"license": [ "BSD-3-Clause" ],
+	"moduleType": [ "amd" ]
+}
