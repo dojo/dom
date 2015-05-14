@@ -17,15 +17,27 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('dts-generator');
 	grunt.loadNpmTasks('intern');
 
-	var compilerOptions = grunt.file.readJSON('tsconfig.json').compilerOptions;
+	var tsconfigContent = grunt.file.read('tsconfig.json');
+	var tsconfig = JSON.parse(tsconfigContent);
+	var compilerOptions = mixin({}, tsconfig.compilerOptions);
+	tsconfig.filesGlob = tsconfig.filesGlob.map(function (glob) {
+		if (/^\.\//.test(glob)) {
+			// Remove the leading './' from the glob because grunt-ts
+			// sees it and thinks it needs to create a .baseDir.ts which
+			// messes up the "dist" compilation
+			return glob.slice(2);
+		}
+		return glob;
+	});
 	var packageJson = grunt.file.readJSON('package.json');
 
 	grunt.initConfig({
 		name: packageJson.name,
 		version: packageJson.version,
-		all: [ 'src/**/*.ts', 'typings/tsd.d.ts' ],
-		tests: [ 'tests/**/*.ts', 'typings/tsd.d.ts' ],
-		devDirectory: compilerOptions.outDir,
+		tsconfig: tsconfig,
+		all: [ '<%= tsconfig.filesGlob %>' ],
+		skipTests: [ '<%= all %>' , '!tests/**/*.ts' ],
+		devDirectory: '<%= tsconfig.compilerOptions.outDir %>',
 		istanbulIgnoreNext: '/* istanbul ignore next */',
 
 		clean: {
@@ -48,7 +60,7 @@ module.exports = function (grunt) {
 				}
 			},
 			coverage: {
-				src: [ 'html-report/' ]
+				src: [ 'coverage-final.json', 'html-report/' ]
 			}
 		},
 
@@ -76,7 +88,7 @@ module.exports = function (grunt) {
 				options: {
 					out: 'dist/typings/<%= name %>/<%= name %>-<%= version %>.d.ts'
 				},
-				src: [ '<%= all %>' ]
+				src: [ '<%= skipTests %>' ]
 			}
 		},
 
@@ -131,7 +143,7 @@ module.exports = function (grunt) {
 				overwrite: true,
 				replacements: [
 					{
-						from: /^(var __(?:extends|decorate) = )/gm,
+						from: /^(var __(?:extends|decorate|param) = )/gm,
 						to: '$1<%= istanbulIgnoreNext %> '
 					},
 					{
@@ -152,14 +164,14 @@ module.exports = function (grunt) {
 			),
 			dev: {
 				outDir: '<%= devDirectory %>',
-				src: [ '<%= all %>', '<%= tests %>' ]
+				src: [ '<%= all %>' ]
 			},
 			dist: {
 				options: {
 					mapRoot: '../dist/_debug'
 				},
 				outDir: 'dist',
-				src: [ '<%= all %>' ]
+				src: [ '<%= skipTests %>' ]
 			}
 		},
 
@@ -170,7 +182,6 @@ module.exports = function (grunt) {
 			src: {
 				src: [
 					'<%= all %>',
-					'<%= tests %>',
 					'!typings/**/*.ts',
 					'!tests/typings/**/*.ts'
 				]
@@ -178,14 +189,19 @@ module.exports = function (grunt) {
 		},
 
 		watch: {
+			grunt: {
+				options: {
+					reload: true
+				},
+				files: [ 'Gruntfile.js', 'tsconfig.json' ]
+			},
 			src: {
 				options: {
 					atBegin: true
 				},
-				files: [ '<%= all %>', '<%= tests %>' ],
+				files: [ '<%= all %>' ],
 				tasks: [
-					'dev',
-					'tslint'
+					'dev'
 				]
 			}
 		}
@@ -216,9 +232,21 @@ module.exports = function (grunt) {
 		grunt.log.writeln('Moved ' + this.files.length + ' files');
 	});
 
+	grunt.registerTask('updateTsconfig', function () {
+		var tsconfig = JSON.parse(tsconfigContent);
+		tsconfig.files = grunt.file.expand(tsconfig.filesGlob);
+
+		var output = JSON.stringify(tsconfig, null, '\t') + require('os').EOL;
+		if (output !== tsconfigContent) {
+			grunt.file.write('tsconfig.json', output);
+			tsconfigContent = output;
+		}
+	});
+
 	grunt.registerTask('dev', [
 		'ts:dev',
-		'replace:addIstanbulIgnore'
+		'replace:addIstanbulIgnore',
+		'updateTsconfig'
 	]);
 	grunt.registerTask('dist', [
 		'ts:dist',
@@ -229,6 +257,7 @@ module.exports = function (grunt) {
 		'dtsGenerator:dist'
 	]);
 	grunt.registerTask('test', [ 'dev', 'intern:client' ]);
+	grunt.registerTask('test-runner', [ 'dev', 'intern:runner' ]);
 	grunt.registerTask('test-local', [ 'dev', 'intern:local' ]);
 	grunt.registerTask('test-proxy', [ 'dev', 'intern:proxy' ]);
 	grunt.registerTask('ci', [ 'tslint', 'test' ]);
