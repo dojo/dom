@@ -51,7 +51,8 @@ export var loader = {
 	packages: [
 		{ name: 'dojo-core', location: 'node_modules/dojo-core/dist' },
 		{ name: 'src', location: '_build/src' },
-		{ name: 'tests', location: '_build/tests' }
+		{ name: 'tests', location: '_build/tests' },
+		{ name: 'dojo', location: 'node_modules/intern/node_modules/dojo' },
 	]
 };
 
