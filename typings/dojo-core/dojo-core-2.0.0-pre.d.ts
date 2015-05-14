@@ -1,11 +1,10 @@
-/// <reference path="../node/node.d.ts" />
 declare module 'dojo-core/global' {
-	 var globalObject: any;
+	 const globalObject: any;
 	export default globalObject;
 
 }
 declare module 'dojo-core/has' {
-	export var cache: {
+	export let cache: {
 	    [feature: string]: any;
 	};
 	/**
@@ -46,7 +45,7 @@ declare module 'dojo-core/queue' {
 	 * Since requestAnimationFrame's behavior does not match that expected from `queueTask`, it is not used there.
 	 * However, at times it makes more sense to delegate to requestAnimationFrame; hence the following method.
 	 */
-	export let queueDomTask: (callback: (...args: any[]) => any) => Handle;
+	export let queueAnimationTask: (callback: (...args: any[]) => any) => Handle;
 	export let queueMicroTask: (callback: (...args: any[]) => any) => Handle;
 
 }
@@ -79,7 +78,7 @@ declare module 'dojo-core/Promise' {
 	export class PromiseShim<T> implements Thenable<T> {
 	    static all<T>(items: (T | Thenable<T>)[]): PromiseShim<T[]>;
 	    static race<T>(items: (T | Thenable<T>)[]): PromiseShim<T>;
-	    static reject<T>(reason?: any): PromiseShim<T>;
+	    static reject<T>(reason?: Error): PromiseShim<T>;
 	    static resolve(): PromiseShim<void>;
 	    static resolve<T>(value: (T | Thenable<T>)): PromiseShim<T>;
 	    /**
@@ -105,13 +104,16 @@ declare module 'dojo-core/Promise' {
 	     * @type {T|Error}
 	     */
 	    private resolvedValue;
-	    catch<U>(onRejected: (reason?: any) => (U | Thenable<U>)): PromiseShim<U>;
-	    then<U>(onFulfilled?: (value?: T) => (U | Thenable<U>), onRejected?: (reason?: any) => (U | Thenable<U>)): PromiseShim<U>;
+	    then: <U>(onFulfilled?: (value?: T) => (U | Thenable<U>), onRejected?: (reason?: Error) => (U | Thenable<U>)) => PromiseShim<U>;
 	}
 	/**
 	 * PlatformPromise is a very thin wrapper around either a native promise implementation or PromiseShim.
 	 */
 	export default class Promise<T> implements Thenable<T> {
+	    /**
+	     * Points to the promise constructor this platform should use.
+	     */
+	    static PromiseConstructor: any;
 	    /**
 	     * Converts an iterable object containing promises into a single promise that resolves to a new iterable object
 	     * containing the fulfilled values of all the promises in the iterable, in the same order as the Promises in the
@@ -326,11 +328,41 @@ declare module 'dojo-core/array' {
 	export function copyWithin<T>(target: ArrayLike<T>, offset: number, start?: number, end?: number): ArrayLike<T>;
 
 }
-declare module 'dojo-core/async/async' {
-	import Promise from 'dojo-core/Promise';
-
-	export interface Identity<T> {
-		(value: T): Promise<T>;
+declare module 'dojo-core/async/Task' {
+	import Promise, { Executor, State, Thenable } from 'dojo-core/Promise';
+	export const Canceled: State;
+	/**
+	 * Task is an extension of Promise that supports cancelation.
+	 */
+	export default class Task<T> extends Promise<T> {
+	    protected static copy<U>(other: Promise<U>): Task<U>;
+	    constructor(executor: Executor<T>, canceler?: () => void);
+	    /**
+	     * A cancelation handler that will be called if this task is canceled.
+	     */
+	    private canceler;
+	    /**
+	     * Children of this Task (i.e., Tasks that were created from this Task with `then` or `catch`).
+	     */
+	    private children;
+	    /**
+	     * The finally callback for this Task (if it was created by a call to `finally`).
+	     */
+	    private _finally;
+	    /**
+	     * Propogates cancelation down through a Task tree. The Task's state is immediately set to canceled. If a Thenable
+	     * finally task was passed in, it is resolved before calling this Task's finally callback; otherwise, this Task's
+	     * finally callback is immediately executed. `_cancel` is called for each child Task, passing in the value returned
+	     * by this Task's finally callback or a Promise chain that will eventually resolve to that value.
+	     */
+	    private _cancel(finallyTask?);
+	    /**
+	     * Immediately cancel this task if it has not already resolved. This Task and any descendants are synchronously set
+	     * to the Canceled state and any `finally` added downstream from the canceled Task are invoked.
+	     */
+	    cancel(): void;
+	    finally(callback: () => void | Thenable<any>): Task<T>;
+	    then<U>(onFulfilled?: (value: T) => U | Thenable<U>, onRejected?: (error: Error) => U | Thenable<U>): Task<U>;
 	}
 
 }
@@ -394,7 +426,6 @@ declare module 'dojo-core/async/iteration' {
 }
 declare module 'dojo-core/async/timing' {
 	import Promise from 'dojo-core/Promise';
-	import { Identity } from 'dojo-core/async/async';
 	/**
 	 * Used for delaying a Promise chain for a specific number of milliseconds.
 	 *
@@ -402,6 +433,9 @@ declare module 'dojo-core/async/timing' {
 	 * @return {function(T): Promise<T>} a function producing a promise that eventually returns the value passed to it; usable with Thenable.then()
 	 */
 	export function delay<T>(milliseconds: number): Identity<T>;
+	export interface Identity<T> {
+	    (value: T): Promise<T>;
+	}
 	/**
 	 * Reject a promise chain if a result hasn't been found before the timeout
 	 *
@@ -425,15 +459,17 @@ declare module 'dojo-core/async/timing' {
 }
 declare module 'dojo-core/observers/interfaces' {
 	import core = require('dojo-core/interfaces');
+
 	export interface Observer extends core.Handle {
-	    observeProperty(...property: string[]): void;
-	    removeProperty(...property: string[]): void;
+		observeProperty(...property: string[]): void;
+		removeProperty(...property: string[]): void;
 	    nextTurn?: boolean;
 	    onlyReportObserved?: boolean;
 	}
+
 	export interface PropertyEvent {
-	    target: {};
-	    name: string;
+		target: {};
+		name: string;
 	}
 
 }
@@ -451,8 +487,7 @@ declare module 'dojo-core/object' {
 
 }
 declare module 'dojo-core/lang' {
-	import * as observers from 'dojo-core/observers/interfaces';
-	import ObjectObserver from 'dojo-core/observers/ObjectObserver';
+	import { PropertyEvent, Observer } from 'dojo-core/observers/interfaces';
 	export function copy(kwArgs: CopyArgs): any;
 	export interface CopyArgs {
 	    deep?: boolean;
@@ -468,7 +503,13 @@ declare module 'dojo-core/lang' {
 	export function getPropertyDescriptor(object: Object, property: string): PropertyDescriptor;
 	export function isIdentical(a: any, b: any): boolean;
 	export function lateBind(instance: {}, method: string, ...suppliedArgs: any[]): (...args: any[]) => any;
-	export function observe(target: {}, listener: (events: observers.PropertyEvent[]) => any): ObjectObserver;
+	export function observe(kwArgs: ObserveArgs): Observer;
+	export interface ObserveArgs {
+	    listener: (events: PropertyEvent[]) => any;
+	    nextTurn?: boolean;
+	    onlyReportObserved?: boolean;
+	    target: {};
+	}
 	export function partial(targetFunction: (...args: any[]) => any, ...suppliedArgs: any[]): (...args: any[]) => any;
 
 }
@@ -570,7 +611,7 @@ declare module 'dojo-core/math' {
 	 * @param n The number to use in calculation
 	 * @return The result
 	 */
-	export var fround: (n: number) => number;
+	export const fround: (n: number) => number;
 	/**
 	 * Returns the result of the 32-bit multiplication of the two parameters.
 	 *
@@ -595,10 +636,71 @@ declare module 'dojo-core/math' {
 	export function trunc(n: number): number;
 
 }
+declare module 'dojo-core/streams/ReadableStreamReader' {
+	import Promise from 'dojo-core/Promise';
+	import ReadableStream, { State } from 'dojo-core/streams/ReadableStream';
+	export interface ReadRequest<T> {
+	    promise: Promise<ReadResult<T>>;
+	    resolve: (value: ReadResult<T>) => void;
+	    reject: (reason: any) => void;
+	}
+	export interface ReadResult<T> {
+	    value: T;
+	    done: boolean;
+	}
+	export function isReadableStreamReader<T>(readableStreamReader: ReadableStreamReader<T>): boolean;
+	export default class ReadableStreamReader<T> {
+	    closed: Promise<void>;
+	    private _closedPromise;
+	    private _ownerReadableStream;
+	    private _storedError;
+	    private _readRequests;
+	    private _resolveClosedPromise;
+	    private _rejectClosedPromise;
+	    state: State;
+	    constructor(stream: ReadableStream<T>);
+	    cancel(reason: string): Promise<void>;
+	    /**
+	     * This method also incorporates the readFromReadableStreamReader from 3.5.12.
+	     * @alias ReadFromReadableStreamReader
+	     * @returns {Promise<ReadResult<T>>}
+	     */
+	    read(): Promise<ReadResult<T>>;
+	    /**
+	     * release a reader's lock on the corresponding stream.
+	     * 3.4.4.4. releaseLock()
+	     */
+	    releaseLock(): void;
+	    /**
+	     * 3.5.13. ReleaseReadableStreamReader ( reader )
+	     * alias ReleaseReadableStreamReader
+	     */
+	    release(): void;
+	    /**
+	     * Resolves a pending read request, if any, with the provided chunk.
+	     * @param chunk
+	     * @return boolean True if a read request was resolved.
+	     */
+	    resolveReadRequest(chunk: T): boolean;
+	}
+
+}
+declare module 'dojo-core/streams/SizeQueue' {
+	export default class SizeQueue<T> {
+	    totalSize: number;
+	    length: number;
+	    private _queue;
+	    empty(): void;
+	    enqueue(value: T, size: number): void;
+	    dequeue(): T;
+	    peek(): T;
+	}
+
+}
 declare module 'dojo-core/streams/TransformStream' {
+	import { Strategy } from 'dojo-core/streams/interfaces';
 	import ReadableStream from 'dojo-core/streams/ReadableStream';
 	import WritableStream from 'dojo-core/streams/WritableStream';
-	import { Strategy } from 'dojo-core/streams/interfaces';
 	export interface Transform<R, W> {
 	    transform(chunk: W, enqueueInReadable: (chunk: R) => void, transformDone: () => void): void;
 	    flush(enqueue: Function, close: Function): void;
@@ -612,34 +714,38 @@ declare module 'dojo-core/streams/TransformStream' {
 	}
 
 }
-declare module 'dojo-core/streams/SizeQueue' {
-	export default class SizeQueue<T> {
-	    private _queue;
-	    dequeue(): T;
-	    enqueue(value: T, size: number): void;
-	    empty(): void;
-	    peek(): T;
-	    totalSize: number;
-	    length: number;
-	}
+declare module 'dojo-core/streams/util' {
+	import { Strategy } from 'dojo-core/streams/interfaces';
+	import Promise from 'dojo-core/Promise';
+	/**
+	 *
+	 */
+	export function createDataProperty(object: {}, property: string, value: any): void;
+	export function getApproximateByteSize(object: any): number;
+	/**
+	 * Calls the method or returns undefined.
+	 */
+	export function invokeOrNoop(O: any, P: string, args?: any[]): any;
+	export function normalizeStrategy<T>({size, highWaterMark}: Strategy<T>): Strategy<T>;
+	export function promiseInvokeOrFallbackOrNoop(object: any, method1: string, args1: any[], method2: string, args2?: any[]): Promise<any>;
+	/**
+	 * Returns a promise that resolves the with result of the method call or undefined.
+	 */
+	export function promiseInvokeOrNoop(O: any, P: string, args?: any[]): Promise<any>;
 
 }
 declare module 'dojo-core/streams/ReadableStream' {
+	import { Strategy } from 'dojo-core/streams/interfaces';
+	import Promise from 'dojo-core/Promise';
 	import ReadableStreamController from 'dojo-core/streams/ReadableStreamController';
 	import ReadableStreamReader from 'dojo-core/streams/ReadableStreamReader';
+	import SizeQueue from 'dojo-core/streams/SizeQueue';
 	import TransformStream from 'dojo-core/streams/TransformStream';
 	import WritableStream from 'dojo-core/streams/WritableStream';
-	import { Strategy } from 'dojo-core/streams/interfaces';
-	import SizeQueue from 'dojo-core/streams/SizeQueue';
-	import Promise from 'dojo-core/Promise';
 	/**
 	 * Options used when piping a readable stream to a writable stream.
 	 */
 	export interface PipeOptions {
-	    /**
-	     * Prevents the writable stream from closing when the pipe operation completes.
-	     */
-	    preventClose?: boolean;
 	    /**
 	     * Prevents the writable stream from erroring if the readable stream encounters an error.
 	     */
@@ -648,96 +754,34 @@ declare module 'dojo-core/streams/ReadableStream' {
 	     *  Prevents the readable stream from erroring if the writable stream encounters an error.
 	     */
 	    preventCancel?: boolean;
-	}
-	/**
-	 * Implementation of a readable stream.
-	 */
-	export default class ReadableStream<T> {
-	    state: State;
-	    _closeRequested: boolean;
-	    _controller: ReadableStreamController<T>;
-	    _pullingPromise: Promise<void>;
-	    _pullScheduled: boolean;
-	    _reader: ReadableStreamReader<T>;
-	    _queue: SizeQueue<T>;
-	    _started: boolean;
-	    _startedPromise: Promise<void>;
-	    _storedError: Error;
-	    _strategy: Strategy<T>;
-	    _underlyingSource: Source<T>;
 	    /**
-	     * @constructor
+	     * Prevents the writable stream from closing when the pipe operation completes.
 	     */
-	    constructor(underlyingSource: Source<T>, strategy?: Strategy<T>);
-	    /**
-	     * 3.5.7. GetReadableStreamDesiredSize ( stream )
-	     * @returns {number}
-	     */
-	    desiredSize: number;
-	    queueSize: number;
-	    /**
-	     *
-	     * @param reason
-	     * @returns {null}
-	     */
-	    cancel(reason?: any): Promise<void>;
-	    _cancel(reason?: any): Promise<void>;
-	    /**
-	     * Requests the stream be closed.  This method allows the queue to be emptied before the stream closes.
-	     *
-	     * 3.5.3. CloseReadableStream ( stream )
-	     * @alias CloseReadableStream
-	     */
-	    _requestClose(): void;
-	    /**
-	     * Closes the stream without regard to the status of the queue.  Use {@link _requestClose} to close the
-	     * stream and allow the queue to flush.
-	     *
-	     * 3.5.4. FinishClosingReadableStream ( stream )
-	     * @private
-	     */
-	    _close(): void;
-	    /**
-	     * @alias EnqueueInReadableStream
-	     */
-	    enqueue(chunk: T): void;
-	    error(error: Error): void;
-	    /**
-	     * create a new ReadableStreamReader and lock the stream to the new reader
-	     * @alias AcquireREadableStreamReader
-	     */
-	    getReader(): ReadableStreamReader<T>;
-	    /**
-	     * @alias IsReadableStreamLocked
-	     */
-	    locked: boolean;
-	    readable: boolean;
-	    hasSource: boolean;
-	    pipeThrough(transformStream: TransformStream<T, any>, options?: PipeOptions): ReadableStream<T>;
-	    pipeTo(dest: WritableStream<T>, options?: PipeOptions): Promise<void>;
-	    /**
-	     * @alias RequestReadableStreamPull
-	     */
-	    _pull(): void;
-	    started: Promise<void>;
-	    /**
-	     * Tee a readable stream, returning a two-element array containing
-	     * the two resulting ReadableStream instances
-	     * @alias TeeReadableStream
-	     */
-	    tee(): [ReadableStream<T>, ReadableStream<T>];
-	    /**
-	     * @alias ShouldReadableStreamPull
-	     */
-	    _allowPull: boolean;
-	    /**
-	     * @alias shouldReadableStreamApplyBackPressure
-	     */
-	    _shouldApplyBackPressure(): boolean;
+	    preventClose?: boolean;
 	}
 	export interface Source<T> {
+	    /**
+	     * Tells the source to prepare for providing chunks to the stream.  While the source may enqueue chunks at this
+	     * point, it is not required.
+	     * @param controller The source can use the controller to enqueue chunks, close the stream or report an error.
+	     * @returns A promise that resolves when the source's start operation has finished.  If the promise rejects,
+	     * 		the stream will be errored.
+	     */
 	    start(controller: ReadableStreamController<T>): Promise<void>;
+	    /**
+	     * Requests that source enqueue chunks.  Use the controller to close the stream when no more chunks can
+	     * be provided.
+	     * @param controller The source can use the controller to enqueue chunks, close the stream or report an error.
+	     * @returns A promise that resolves when the source's pull operation has finished.  If the promise rejects,
+	     * 		the stream will be errored.
+	     */
 	    pull(controller: ReadableStreamController<T>): Promise<void>;
+	    /**
+	     * Indicates the stream is prematurely closing and allows the source to do any necessary clean up.
+	     * @param reason The reason why the stream is closing.
+	     * @returns A promise that resolves when the source's pull operation has finished.  If the promise rejects,
+	     * 		the stream will be errored.
+	     */
 	    cancel(reason?: any): Promise<void>;
 	}
 	/**
@@ -748,10 +792,99 @@ declare module 'dojo-core/streams/ReadableStream' {
 	    Closed = 1,
 	    Errored = 2,
 	}
+	/**
+	 * Implementation of a readable stream.
+	 */
+	export default class ReadableStream<T> {
+	    /**
+	     * @alias ShouldReadableStreamPull
+	     */
+	    protected _allowPull: boolean;
+	    /**
+	     * 3.5.7. GetReadableStreamDesiredSize ( stream )
+	     * @returns {number}
+	     */
+	    desiredSize: number;
+	    hasSource: boolean;
+	    /**
+	     * @alias IsReadableStreamLocked
+	     */
+	    locked: boolean;
+	    readable: boolean;
+	    started: Promise<void>;
+	    queueSize: number;
+	    protected _pullingPromise: Promise<void>;
+	    protected _started: boolean;
+	    protected _startedPromise: Promise<void>;
+	    protected _strategy: Strategy<T>;
+	    protected _underlyingSource: Source<T>;
+	    closeRequested: boolean;
+	    controller: ReadableStreamController<T>;
+	    pullScheduled: boolean;
+	    queue: SizeQueue<T>;
+	    reader: ReadableStreamReader<T>;
+	    state: State;
+	    storedError: Error;
+	    /**
+	     * @constructor
+	     */
+	    constructor(underlyingSource: Source<T>, strategy?: Strategy<T>);
+	    protected _cancel(reason?: any): Promise<void>;
+	    /**
+	     * @alias shouldReadableStreamApplyBackPressure
+	     */
+	    protected _shouldApplyBackPressure(): boolean;
+	    /**
+	     *
+	     * @param reason
+	     * @returns {null}
+	     */
+	    cancel(reason?: any): Promise<void>;
+	    /**
+	     * Closes the stream without regard to the status of the queue.  Use {@link requestClose} to close the
+	     * stream and allow the queue to flush.
+	     *
+	     * 3.5.4. FinishClosingReadableStream ( stream )
+	     */
+	    close(): void;
+	    /**
+	     * @alias EnqueueInReadableStream
+	     */
+	    enqueue(chunk: T): void;
+	    error(error: Error): void;
+	    /**
+	     * create a new ReadableStreamReader and lock the stream to the new reader
+	     * @alias AcquireREadableStreamReader
+	     */
+	    getReader(): ReadableStreamReader<T>;
+	    pipeThrough(transformStream: TransformStream<T, any>, options?: PipeOptions): ReadableStream<T>;
+	    pipeTo(dest: WritableStream<T>, options?: PipeOptions): Promise<void>;
+	    /**
+	     * @alias RequestReadableStreamPull
+	     */
+	    pull(): void;
+	    /**
+	     * Requests the stream be closed.  This method allows the queue to be emptied before the stream closes.
+	     *
+	     * 3.5.3. CloseReadableStream ( stream )
+	     * @alias CloseReadableStream
+	     */
+	    requestClose(): void;
+	    /**
+	     * Tee a readable stream, returning a two-element array containing
+	     * the two resulting ReadableStream instances
+	     * @alias TeeReadableStream
+	     */
+	    tee(): [ReadableStream<T>, ReadableStream<T>];
+	}
 
 }
 declare module 'dojo-core/streams/ReadableStreamController' {
 	import ReadableStream from 'dojo-core/streams/ReadableStream';
+	/**
+	 * 3.5.9-1 has been ignored
+	 */
+	export function isReadableStreamController(x: any): boolean;
 	export default class ReadableStreamController<T> {
 	    private _controlledReadableStream;
 	    /**
@@ -773,10 +906,6 @@ declare module 'dojo-core/streams/ReadableStreamController' {
 	     */
 	    error(e: Error): void;
 	}
-	/**
-	 * 3.5.9-1 has been ignored
-	 */
-	export function isReadableStreamController(x: any): boolean;
 
 }
 declare module 'dojo-core/streams/interfaces' {
@@ -795,29 +924,85 @@ declare module 'dojo-core/streams/interfaces' {
 	}
 
 }
-declare module 'dojo-core/streams/util' {
+declare module 'dojo-core/streams/WritableStream' {
 	import { Strategy } from 'dojo-core/streams/interfaces';
 	import Promise from 'dojo-core/Promise';
-	export function promiseInvokeOrFallbackOrNoop(object: any, method1: string, args1: any[], method2: string, args2?: any[]): Promise<any>;
+	import SizeQueue from 'dojo-core/streams/SizeQueue';
+	export interface Record<T> {
+	    close?: boolean;
+	    chunk?: T;
+	    reject?: (error: Error) => void;
+	    resolve?: () => void;
+	}
 	/**
-	 * return a promise that resolves the with result of the method call or undefined
+	 * WritableStream's possible states
 	 */
-	export function promiseInvokeOrNoop(O: any, P: string, args?: any[]): Promise<any>;
-	/**
-	 * call the method or return undefined
-	 */
-	export function invokeOrNoop(O: any, P: string, args?: any[]): any;
-	/**
-	 *
-	 */
-	export function createDataProperty(object: {}, property: string, value: any): void;
-	export function normalizeStrategy<T>({size, highWaterMark}: Strategy<T>): Strategy<T>;
-	export function getApproximateByteSize(object: any): number;
+	export enum State {
+	    Closed = 0,
+	    Closing = 1,
+	    Errored = 2,
+	    Waiting = 3,
+	    Writable = 4,
+	}
+	export interface Sink<T> {
+	    /**
+	     * Indicates the stream is prematurely closing due to an error.  The sink should do any necessary cleanup
+	     * and release resources.
+	     * @param reason The reason the stream is closing.
+	     */
+	    abort(reason?: any): Promise<void>;
+	    /**
+	     * Indicates the stream is closing.  The sink should do any necessary cleanup and release resources.
+	     */
+	    close(): Promise<void>;
+	    /**
+	     * Requests the sink to prepare for receiving chunks.
+	     * @param error An error callback that can be used at any time by the sink to indicate an error has occurred.
+	     * @returns A promise that resolves when the sink's start operation has finished.  If the promise rejects,
+	     * 		the stream will be errored.
+	     */
+	    start(error: (error: Error) => void): Promise<void>;
+	    /**
+	     * Requests the sink write a chunk.
+	     * @param chunk The chunk to be written.
+	     * @returns A promise that resolves when the sink's write operation has finished.  If the promise rejects,
+	     * 		the stream will be errored.
+	     */
+	    write(chunk: T): Promise<void>;
+	}
+	export default class WritableStream<T> {
+	    closed: Promise<void>;
+	    ready: Promise<void>;
+	    state: State;
+	    protected _advancing: boolean;
+	    protected _closedPromise: Promise<void>;
+	    protected _readyPromise: Promise<void>;
+	    protected _rejectClosedPromise: (error: Error) => void;
+	    protected _rejectReadyPromise: (error: Error) => void;
+	    protected _resolveClosedPromise: () => void;
+	    protected _resolveReadyPromise: () => void;
+	    protected _started: boolean;
+	    protected _startedPromise: Promise<any>;
+	    protected _state: State;
+	    protected _storedError: Error;
+	    protected _strategy: Strategy<T>;
+	    protected _underlyingSink: Sink<T>;
+	    protected _queue: SizeQueue<Record<T>>;
+	    protected _writing: boolean;
+	    constructor(underlyingSink: Sink<T>, strategy?: Strategy<T>);
+	    protected _advanceQueue(): void;
+	    protected _close(): void;
+	    protected _error(error: Error): void;
+	    protected _syncStateWithQueue(): void;
+	    abort(reason: any): Promise<void>;
+	    close(): Promise<void>;
+	    write(chunk: T): Promise<void>;
+	}
 
 }
 declare module 'dojo-core/streams/ArraySink' {
-	import { Sink } from 'dojo-core/streams/WritableStream';
 	import Promise from 'dojo-core/Promise';
+	import { Sink } from 'dojo-core/streams/WritableStream';
 	/**
 	 * A WritableStream sink that collects the chunks it receives and
 	 * stores them into an array.  Use the chunks property to retrieve
@@ -861,10 +1046,123 @@ declare module 'dojo-core/streams/CountQueuingStrategy' {
 	}
 
 }
+declare module 'dojo-core/streams/adapters/ReadableNodeStreamSource' {
+	import Promise from 'dojo-core/Promise';
+	import { Source } from 'dojo-core/streams/ReadableStream';
+	import ReadableStreamController from 'dojo-core/streams/ReadableStreamController';
+	import { Readable } from 'stream';
+	export type NodeSourceType = Buffer | string;
+	export default class ReadableNodeStreamSource implements Source<NodeSourceType> {
+	    protected _controller: ReadableStreamController<NodeSourceType>;
+	    protected _isClosed: boolean;
+	    protected _onClose: () => void;
+	    protected _onData: (chunk: NodeSourceType) => void;
+	    protected _onError: (error: Error) => void;
+	    protected _nodeStream: Readable;
+	    constructor(nodeStream: Readable);
+	    protected _close(): void;
+	    protected _handleClose(): void;
+	    protected _handleError(error: Error): void;
+	    protected _removeListeners(): void;
+	    cancel(reason?: any): Promise<void>;
+	    pull(controller: ReadableStreamController<NodeSourceType>): Promise<void>;
+	    start(controller: ReadableStreamController<NodeSourceType>): Promise<void>;
+	}
+
+}
+declare module 'dojo-core/streams/adapters/WritableNodeStreamSink' {
+	import Promise from 'dojo-core/Promise';
+	import { Sink } from 'dojo-core/streams/WritableStream';
+	export type NodeSourceType = Buffer | string;
+	export default class WritableNodeStreamSink implements Sink<NodeSourceType> {
+	    protected _encoding: string;
+	    protected _isClosed: boolean;
+	    protected _nodeStream: NodeJS.WritableStream;
+	    protected _onError: (error: Error) => void;
+	    protected _rejectWritePromise: Function;
+	    constructor(nodeStream: NodeJS.WritableStream, encoding?: string);
+	    protected _handleError(error: Error): void;
+	    protected _removeListeners(): void;
+	    abort(reason: any): Promise<void>;
+	    close(): Promise<void>;
+	    start(): Promise<void>;
+	    write(chunk: string): Promise<void>;
+	}
+
+}
 declare module 'dojo-core/string' {
+	/**
+	 * Returns the UTF-16 encoded code point value of a given position in a string.
+	 * @param text The string containing the element whose code point is to be determined
+	 * @param position Position of an element within the string to retrieve the code point value from
+	 * @return A non-negative integer representing the UTF-16 encoded code point value
+	 */
+	export function codePointAt(text: string, position?: number): number;
+	/**
+	 * Determines whether a string ends with the given substring.
+	 * @param text The string to look for the search string within
+	 * @param search The string to search for
+	 * @param endPosition The index searching should stop before (defaults to text.length)
+	 * @return Boolean indicating if the search string was found at the end of the given string
+	 */
+	export function endsWith(text: string, search: string, endPosition?: number): boolean;
+	/**
+	 * Escapes a string so that it can safely be passed to the RegExp constructor.
+	 * @param text The string to be escaped
+	 * @return The escaped string
+	 */
 	export function escapeRegExp(text: string): string;
+	/**
+	 * Sanitizes a string to protect against tag injection.
+	 * @param xml The string to be escaped
+	 * @param forAttribute Whether to also escape ', ", and > in addition to < and &
+	 * @return The escaped string
+	 */
 	export function escapeXml(xml: string, forAttribute?: boolean): string;
-	export function padStart(text: string, size: number, character?: string): string;
-	export function padEnd(text: string, size: number, character?: string): string;
+	/**
+	 * Returns a string created by using the specified sequence of code points.
+	 * @param codePoints One or more code points
+	 * @return A string containing the given code points
+	 */
+	export function fromCodePoint(...codePoints: number[]): string;
+	/**
+	 * Determines whether a string includes the given substring (optionally starting from a given index).
+	 * @param text The string to look for the search string within
+	 * @param search The string to search for
+	 * @param position The index to begin searching at
+	 * @return Boolean indicating if the search string was found within the given string
+	 */
+	export function includes(text: string, search: string, position?: number): boolean;
+	/**
+	 * Adds padding to the end of a string to ensure it is a certain length.
+	 * @param text The string to pad
+	 * @param length The target minimum length of the string
+	 * @param character The character to pad onto the end of the string
+	 * @return The string, padded to the given length if necessary
+	 */
+	export function padEnd(text: string, length: number, character?: string): string;
+	/**
+	 * Adds padding to the beginning of a string to ensure it is a certain length.
+	 * @param text The string to pad
+	 * @param length The target minimum length of the string
+	 * @param character The character to pad onto the beginning of the string
+	 * @return The string, padded to the given length if necessary
+	 */
+	export function padStart(text: string, length: number, character?: string): string;
+	/**
+	 * Returns a string containing the given string repeated the specified number of times.
+	 * @param text The string to repeat
+	 * @param count The number of times to repeat the string
+	 * @return A string containing the input string repeated count times
+	 */
+	export function repeat(text: string, count?: number): string;
+	/**
+	 * Determines whether a string begins with the given substring (optionally starting from a given index).
+	 * @param text The string to look for the search string within
+	 * @param search The string to search for
+	 * @param position The index to begin searching at
+	 * @return Boolean indicating if the search string was found at the beginning of the given string
+	 */
+	export function startsWith(text: string, search: string, position?: number): boolean;
 
 }
