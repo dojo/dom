@@ -9,19 +9,19 @@ export enum Position {
 
 // Tag trees for element creation
 let tagWrap: {[key: string]: any} = {
-		option: ['select'],
-		tbody: ['table'],
-		thead: ['table'],
-		tfoot: ['table'],
-		tr: ['table', 'tbody'],
-		td: ['table', 'tbody', 'tr'],
-		th: ['table', 'thead', 'tr'],
-		legend: ['fieldset'],
-		caption: ['table'],
-		colgroup: ['table'],
-		col: ['table', 'colgroup'],
-		li: ['ul']
-	};
+	option: ['select'],
+	tbody: ['table'],
+	thead: ['table'],
+	tfoot: ['table'],
+	tr: ['table', 'tbody'],
+	td: ['table', 'tbody', 'tr'],
+	th: ['table', 'thead', 'tr'],
+	legend: ['fieldset'],
+	caption: ['table'],
+	colgroup: ['table'],
+	col: ['table', 'colgroup'],
+	li: ['ul']
+};
 
 for(let param in tagWrap){
     let tw = tagWrap[param];
