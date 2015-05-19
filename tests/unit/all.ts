@@ -1,1 +1,1 @@
-import 'dojo/has!host-browser?./dom:';
+import './dom';
