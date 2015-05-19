@@ -15,6 +15,7 @@
 		"./typings/tsd.d.ts"
 	],
 	"files": [
+		"./src/dom.ts",
 		"./src/main.ts",
 		"./tests/functional/all.ts",
 		"./tests/intern-local.ts",
@@ -27,6 +28,7 @@
 		"./tests/typings/node/node.d.ts",
 		"./tests/typings/tsd.d.ts",
 		"./tests/unit/all.ts",
+		"./tests/unit/dom.ts",
 		"./typings/tsd.d.ts"
 	]
 }
