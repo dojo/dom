@@ -1,25 +1,3 @@
-// Tag trees for element creation
-const tagWrap: {[key: string]: any} = {
-	option: ['select'],
-	tbody: ['table'],
-	thead: ['table'],
-	tfoot: ['table'],
-	tr: ['table', 'tbody'],
-	td: ['table', 'tbody', 'tr'],
-	th: ['table', 'thead', 'tr'],
-	legend: ['fieldset'],
-	caption: ['table'],
-	colgroup: ['table'],
-	col: ['table', 'colgroup'],
-	li: ['ul']
-};
-
-for (const param in tagWrap) {
-	const tw = tagWrap[param];
-	tw.pre = param === 'option' ? '<select multiple="multiple">' : '<' + tw.join('><') + '>';
-	tw.post = '</' + tw.reverse().join('></') + '>';
-}
-
 /**
  * Retrieves an element from the document by its ID attribute.
  *
@@ -47,6 +25,26 @@ export function contains(parent: Element, node: Node): boolean {
 	return Boolean(node.compareDocumentPosition(parent) & Node.DOCUMENT_POSITION_CONTAINS);
 }
 
+// Tag trees for element creation, used by fromString
+const tagWrap: {[key: string]: any} = {
+	option: ['select'],
+	tbody: ['table'],
+	thead: ['table'],
+	tfoot: ['table'],
+	tr: ['table', 'tbody'],
+	td: ['table', 'tbody', 'tr'],
+	th: ['table', 'thead', 'tr'],
+	caption: ['table'],
+	colgroup: ['table'],
+	col: ['table', 'colgroup']
+};
+
+for (const param in tagWrap) {
+	const tw = tagWrap[param];
+	tw.pre = param === 'option' ? '<select multiple="multiple">' : '<' + tw.join('><') + '>';
+	tw.post = '</' + tw.reverse().join('></') + '>';
+}
+
 /**
  * Creates a DocumentFragment from a string.
  *
@@ -67,19 +65,17 @@ export function fromString(html: string): DocumentFragment {
 
 	const match = html.match(/<\s*([\w\:]+)/);
 	const tag = match ? match[1].toLowerCase() : '';
-	const master = document.createElement('div');
-	let outer: Node;
+	let master: HTMLElement = document.createElement('div');
 
 	if (match && tagWrap[tag]) {
 		let wrap = tagWrap[tag];
 		master.innerHTML = wrap.pre + html + wrap.post;
-		for (let i = wrap.length; i; --i) {
-			outer = master.firstChild;
+		for (let i = wrap.length; i--;) {
+			master = <HTMLElement> master.firstChild;
 		}
 	}
 	else {
 		master.innerHTML = html;
-		outer = master;
 	}
 
 	let fragment = document.createDocumentFragment();

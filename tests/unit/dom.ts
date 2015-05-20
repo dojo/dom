@@ -60,13 +60,20 @@ registerSuite({
 	})(),
 
 	fromString: (function () {
-		function assertHierarchy(fragment: DocumentFragment, ...nodeNames: string[]) {
-			// Used for concisely testing special cases where parent nodes are implicitly created
-			let node: Node = fragment;
-			for (let i = 0; i < nodeNames.length; i++) {
-				node = node.firstChild;
-				assert.strictEqual(node.nodeName, nodeNames[i]);
-			}
+		function createTagTest(tagName: string) {
+			return function () {
+				// Single
+				let html = '<' + tagName + '></' + tagName + '>';
+				let fragment = dom.fromString(html);
+				assert.strictEqual(fragment.firstChild.nodeName, tagName.toUpperCase());
+
+				// Multiple
+				html += html;
+				fragment = dom.fromString(html);
+				assert.strictEqual(fragment.childNodes.length, 2);
+				assert.strictEqual(fragment.firstChild.nodeName, tagName.toUpperCase());
+				assert.strictEqual(fragment.lastChild.nodeName, tagName.toUpperCase());
+			};
 		}
 
 		return {
@@ -104,65 +111,17 @@ registerSuite({
 				}
 			},
 
-			'<option> created inside <select>'() {
-				let fragment = dom.fromString('<option></option>');
-				assertHierarchy(fragment, 'SELECT', 'OPTION');
-			},
-
-			'<tbody> created inside <table>'() {
-				let fragment = dom.fromString('<tbody></tbody>');
-				assertHierarchy(fragment, 'TABLE', 'TBODY');
-			},
-
-			'<thead> created inside <table>'() {
-				let fragment = dom.fromString('<thead></thead>');
-				assertHierarchy(fragment, 'TABLE', 'THEAD');
-			},
-
-			'<tfoot> created inside <table>'() {
-				let fragment = dom.fromString('<tfoot></tfoot>');
-				assertHierarchy(fragment, 'TABLE', 'TFOOT');
-			},
-
-			'<tr> created inside <tbody> inside <table>'() {
-				let fragment = dom.fromString('<tr></tr>');
-				assertHierarchy(fragment, 'TABLE', 'TBODY', 'TR');
-			},
-
-			'<td> created inside <tr> inside <tbody> inside <table>'() {
-				let fragment = dom.fromString('<td></td>');
-				assertHierarchy(fragment, 'TABLE', 'TBODY', 'TR', 'TD');
-			},
-
-			'<td> created inside <tr> inside <thead> inside <table>'() {
-				let fragment = dom.fromString('<th></th>');
-				assertHierarchy(fragment, 'TABLE', 'THEAD', 'TR', 'TH');
-			},
-
-			'<legend> created inside <fieldset>'() {
-				let fragment = dom.fromString('<legend></legend>');
-				assertHierarchy(fragment, 'FIELDSET', 'LEGEND');
-			},
-
-			'<caption> created inside <table>'() {
-				let fragment = dom.fromString('<caption></caption>');
-				assertHierarchy(fragment, 'TABLE', 'CAPTION');
-			},
-
-			'<colgroup> created inside <table>'() {
-				let fragment = dom.fromString('<colgroup></colgroup>');
-				assertHierarchy(fragment, 'TABLE', 'COLGROUP');
-			},
-
-			'<col> created inside <colgroup> inside <table>'() {
-				let fragment = dom.fromString('<col></col>');
-				assertHierarchy(fragment, 'TABLE', 'COLGROUP', 'COL');
-			},
-
-			'<li> created inside <ul>'() {
-				let fragment = dom.fromString('<li></li>');
-				assertHierarchy(fragment, 'UL', 'LI');
-			}
+			'<option> is created successfully and returned unwrapped': createTagTest('option'),
+			'<tbody> is created successfully and returned unwrapped': createTagTest('tbody'),
+			'<thead> is created successfully and returned unwrapped': createTagTest('thead'),
+			'<tfoot> is created successfully and returned unwrapped': createTagTest('tfoot'),
+			'<th> is created successfully and returned unwrapped': createTagTest('th'),
+			'<td> is created successfully and returned unwrapped': createTagTest('td'),
+			'<legend> is created successfully and returned unwrapped': createTagTest('legend'),
+			'<caption> is created successfully and returned unwrapped': createTagTest('caption'),
+			'<colgroup> is created successfully and returned unwrapped': createTagTest('colgroup'),
+			'<col> is created successfully and returned unwrapped': createTagTest('col'),
+			'<li> is created successfully and returned unwrapped': createTagTest('li')
 		};
 	})(),
 
