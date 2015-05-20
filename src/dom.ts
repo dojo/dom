@@ -345,7 +345,7 @@ export function removeClass(element: HTMLElement, ...classes: string[]): void {
  * dom.toggleClass(button, 'active');
  *
  * @example
- * dom.toggleClass(button, 'active', isActive);
+ * dom.toggleClass(button, 'active', determineState());
  */
 export function toggleClass(element: HTMLElement, className: string, force: boolean = !containsClass(element, className)): boolean {
 	const func = force ? addClass : removeClass;
