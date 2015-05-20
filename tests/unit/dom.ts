@@ -260,28 +260,38 @@ registerSuite({
 						assert.include(targetElement.className, 'test2');
 					},
 
-					'null node'() {
+					'null node should not throw'() {
 						assert.doesNotThrow(function () {
 							dom.addClass(null, 'test');
 						});
 					},
 
-					'invalid class'() {
+					'invalid class should throw'() {
 						assert.throws(function () {
 							dom.addClass(targetElement, 'te est');
 						});
+						assert.throws(function () {
+							dom.addClass(targetElement, '');
+						});
 					},
 
-					'null class'() {
+					'null class should add "null" to className'() {
+						assert.doesNotThrow(function () {
+							dom.addClass(targetElement, null);
+							assert.include(targetElement.className, 'null');
+						});
+					},
+
+					'no class should not throw'() {
 						assert.doesNotThrow(function () {
 							dom.addClass(targetElement);
 						});
 					},
 
-					'existing class'() {
+					'existing class should not get re-added'() {
 						dom.addClass(targetElement, 'test');
 						dom.addClass(targetElement, 'test');
-						assert.lengthOf(targetElement.className.match(/test/), 1);
+						assert.lengthOf(targetElement.className.match(/test/g), 1);
 					}
 				},
 
@@ -295,22 +305,39 @@ registerSuite({
 						assert.isTrue(dom.containsClass(element, 'test'));
 					},
 
-					'null node'() {
+					'null node should not throw'() {
 						assert.doesNotThrow(function () {
 							dom.containsClass(null, 'test');
 						});
 					},
 
-					'invalid class'() {
+					'invalid class should throw'() {
 						assert.throws(function () {
 							dom.containsClass(targetElement, 'te est');
 						});
+						assert.throws(function () {
+							dom.containsClass(targetElement, '');
+						});
 					},
 
-					'null class'() {
+					'null class should check for "null" CSS class'() {
 						assert.doesNotThrow(function () {
-							dom.containsClass(targetElement, null);
+							assert.isFalse(dom.containsClass(targetElement, null));
+							dom.addClass(targetElement, null);
+							assert.isTrue(dom.containsClass(targetElement, null));
 						});
+					},
+
+					'no class should throw'() {
+						assert.throws(function () {
+							dom.containsClass.call(dom, targetElement);
+						});
+					},
+
+					'should not match partial class names'() {
+						dom.addClass(targetElement, 'foobar');
+						assert.isTrue(dom.containsClass(targetElement, 'foobar'));
+						assert.isFalse(dom.containsClass(targetElement, 'foo'));
 					}
 				},
 
@@ -327,7 +354,7 @@ registerSuite({
 					},
 
 					'remove multiple classes'() {
-						dom.addClass(targetElement, 'test1', 'test2');
+						targetElement.className = 'test1 test2';
 						assert.include(targetElement.className, 'test1');
 						assert.include(targetElement.className, 'test2');
 						dom.removeClass(targetElement, 'test1', 'test2');
@@ -335,31 +362,42 @@ registerSuite({
 						assert.notInclude(targetElement.className, 'test2');
 					},
 
-					'null node'() {
+					'null node should not throw'() {
 						assert.doesNotThrow(function () {
 							dom.removeClass(null, 'test');
 						});
 					},
 
-					'invalid class'() {
+					'invalid class should throw'() {
 						assert.throws(function () {
 							dom.removeClass(targetElement, 'te est');
 						});
+						assert.throws(function () {
+							dom.removeClass(targetElement, '');
+						});
 					},
 
-					'null class'() {
+					'null class should remove "null" from className'() {
+						assert.doesNotThrow(function () {
+							dom.addClass(targetElement, null);
+							dom.removeClass(targetElement, null);
+							assert.notInclude(targetElement.className, 'null');
+						});
+					},
+
+					'no class should not throw'() {
 						assert.doesNotThrow(function () {
 							dom.removeClass(targetElement);
 						});
 					},
 
 					'remove nonexistent class'() {
+						dom.addClass(targetElement, 'test');
 						assert.doesNotThrow(function () {
 							dom.removeClass(targetElement, 'random');
 						});
-					},
+						assert.include(targetElement.className, 'test');
 
-					'remove mutiple nonexistent classes'() {
 						assert.doesNotThrow(function () {
 							dom.removeClass(targetElement, 'random', 'random1');
 						});
@@ -392,6 +430,36 @@ registerSuite({
 						dom.addClass(targetElement, 'test');
 						dom.toggleClass(targetElement, 'test', false);
 						assert.notInclude(targetElement.className, 'test');
+					},
+
+					'null node should not throw'() {
+						assert.doesNotThrow(function () {
+							dom.toggleClass(null, 'test');
+						});
+					},
+
+					'invalid class should throw'() {
+						assert.throws(function () {
+							dom.toggleClass(targetElement, 'te st');
+						});
+						assert.throws(function () {
+							dom.toggleClass(targetElement, '');
+						});
+					},
+
+					'null class should toggle "null" on className'() {
+						assert.doesNotThrow(function () {
+							dom.toggleClass(targetElement, null);
+							assert.include(targetElement.className, 'null');
+							dom.toggleClass(targetElement, null);
+							assert.notInclude(targetElement.className, 'null');
+						});
+					},
+
+					'no class should throw'() {
+						assert.throws(function () {
+							dom.toggleClass.call(dom, targetElement);
+						});
 					}
 				}
 			};
