@@ -108,7 +108,7 @@ for (const param in tagWrap) {
 }
 
 function validateClass(token: string): void {
-	if (!token || token === '') {
+	if (token === '') {
 		throw new Error('An invalid or illegal string was specified');
 	}
 	if (/\s/.test(token)) {
@@ -120,7 +120,7 @@ function validateClass(token: string): void {
  * Adds one or more CSS class names to an Element without duplication
  *
  * @param element The Element to which to add CSS classes
- * @param classes An array of string CSS classes to add to the Element
+ * @param classes One or more CSS class strings to add to the Element
  *
  * @example
  * dom.addClass(document.body, 'loaded');
@@ -129,24 +129,26 @@ function validateClass(token: string): void {
  * dom.addClass(document.body, 'loaded', 'ready');
  */
 export function addClass(element: Element, ...classes: string[]): void {
+	// Cast to <any> to support multiple Element types. For more info,
+	// see https://github.com/Microsoft/TypeScript/issues/3220
 	let targetElement = <any> element;
-	if (!targetElement) {
+	if (!targetElement || classes.length === 0) {
 		return;
 	}
-	if (targetElement.classList) {
-		let classList: any = targetElement.classList;
-		classList.add.apply(classList, classes);
-	}
-	else {
-		let newClasses: string[] = new Array();
-		for (let className in classes) {
-			validateClass(className);
-			if (!this.contains(targetElement, className)) {
-				newClasses.push(className);
-			}
+	let newClasses: string[] = [];
+	for (let className of classes) {
+		validateClass(className);
+		if (!containsClass(targetElement, className)) {
+			// Convert to string so "null" can be added; matches classList
+			// API which allows null to be added as a class name
+			newClasses.push(String(className));
 		}
-		if (newClasses.length > 0) {
+	}
+	if (newClasses.length > 0) {
+		if (targetElement.className.length > 0) {
 			targetElement.className += (' ' + newClasses.join(' '));
+		} else {
+			targetElement.className += (newClasses.join(' '));
 		}
 	}
 }
@@ -171,9 +173,9 @@ export function containsClass(element: HTMLElement, className: string): boolean 
 }
 
 /**
- * Determines whether an ELement has a CSS class name
+ * Determines whether an Element has a CSS class name
  *
- * @param element The Element to which to check for a CSS class
+ * @param element The Element to check for a CSS class
  * @param className The CSS class name to check for
  *
  * @example
@@ -184,14 +186,12 @@ export function containsClass(element: Element, className: string): boolean {
 	if (!targetElement) {
 		return;
 	}
-	if (targetElement.classList) {
-		let classList: any = targetElement.classList;
-		return classList.contains(className);
+	if (arguments.length === 1) {
+		throw new Error('A class name is required');
 	}
-	else {
-		validateClass(className);
-		return targetElement.className.indexOf(className) > -1;
-	}
+	validateClass(className);
+	let targetClass = ' ' + targetElement.className + ' ';
+	return targetClass.indexOf(' ' + className + ' ') > -1;
 }
 
 /**
