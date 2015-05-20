@@ -34,6 +34,20 @@ export function byId(id: string): HTMLElement {
 }
 
 /**
+ * Indicates whether the given parent contains the given node.
+ * @param parent The parent node to check within
+ * @param node The node to test whether parent is its ancestor
+ * @return `true` if parent contains node, `false` otherwise
+ */
+export function contains(parent: Element, node: Node): boolean {
+	// While modern browsers do support parent.contains, some support it only on HTML elements,
+	// and IE has a known bug involving passing a text node as the argument:
+	// https://connect.microsoft.com/IE/feedback/details/780874/node-contains-is-incorrect
+	// Meanwhile, compareDocumentPosition works in all supported browsers.
+	return Boolean(node.compareDocumentPosition(parent) & Node.DOCUMENT_POSITION_CONTAINS);
+}
+
+/**
  * Creates a DocumentFragment from a string.
  *
  * @param html string representation of nodes to create

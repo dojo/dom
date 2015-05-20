@@ -7,16 +7,16 @@ let element: HTMLElement;
 registerSuite({
 	name: 'dom',
 
-	setup() {
-		element = document.createElement('span');
-		element.id = 'id';
-	},
-
-	teardown() {
-		element.parentElement.removeChild(element);
-	},
-
 	byId: {
+		setup() {
+			element = document.createElement('span');
+			element.id = 'id';
+		},
+
+		teardown() {
+			element.parentElement.removeChild(element);
+		},
+
 		'result found'() {
 			document.body.appendChild(element);
 			assert.strictEqual(dom.byId('id').id, 'id');
@@ -26,6 +26,38 @@ registerSuite({
 			assert.isNull(dom.byId('undefined'));
 		}
 	},
+
+	contains: (function () {
+		function testContains(ancestor: Element, child: Node) {
+			ancestor.appendChild(child);
+			document.body.appendChild(ancestor);
+
+			assert.isTrue(dom.contains(ancestor, child),
+				'should return true when 2nd argument is a child of 1st argument');
+			assert.isTrue(dom.contains(document.body, child),
+				'should return true when 2nd argument is a grandchild of 1st argument');
+			assert.isFalse(dom.contains(<any> child, ancestor),
+				'should return false when 2nd argument is an ancestor of 1st argument');
+		}
+
+		return {
+			beforeEach() {
+				element = document.createElement('div');
+			},
+
+			afterEach() {
+				document.body.removeChild(element);
+			},
+
+			'basic tests'() {
+				testContains(element, document.createElement('div'));
+			},
+
+			'tests with text node'() {
+				testContains(element, document.createTextNode(' '));
+			}
+		};
+	})(),
 
 	fromString: (function () {
 		function assertHierarchy(fragment: DocumentFragment, ...nodeNames: string[]) {
