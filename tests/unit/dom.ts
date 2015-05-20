@@ -488,5 +488,169 @@ registerSuite({
 			assert.strictEqual(parent.children.length, 0);
 			assert.isNull(node.parentNode);
 		}
-	}
+	},
+
+	'CSS manipulation': (function () {
+		function cssSuite(element: Element): {} {
+			let targetElement = <any> element;
+			return {
+				addClass: {
+					afterEach() {
+						targetElement.className = '';
+					},
+
+					'add single class'() {
+						assert.notInclude(targetElement.className, 'test');
+						dom.addClass(targetElement, 'test');
+						assert.include(targetElement.className, 'test');
+					},
+
+					'add multiple classes'() {
+						dom.addClass(targetElement, 'test1', 'test2');
+						assert.include(targetElement.className, 'test1');
+						assert.include(targetElement.className, 'test2');
+					},
+
+					'null node'() {
+						assert.doesNotThrow(function () {
+							dom.addClass(null, 'test');
+						});
+					},
+
+					'invalid class'() {
+						assert.throws(function () {
+							dom.addClass(targetElement, 'te est');
+						});
+					},
+
+					'null class'() {
+						assert.doesNotThrow(function () {
+							dom.addClass(targetElement);
+						});
+					},
+
+					'existing class'() {
+						dom.addClass(targetElement, 'test');
+						dom.addClass(targetElement, 'test');
+						assert.lengthOf(targetElement.className.match(/test/), 1);
+					}
+				},
+
+				containsClass: {
+					afterEach() {
+						targetElement.className = '';
+					},
+
+					'contains single class'() {
+						dom.addClass(targetElement, 'test');
+						assert.isTrue(dom.containsClass(element, 'test'));
+					},
+
+					'null node'() {
+						assert.doesNotThrow(function () {
+							dom.containsClass(null, 'test');
+						});
+					},
+
+					'invalid class'() {
+						assert.throws(function () {
+							dom.containsClass(targetElement, 'te est');
+						});
+					},
+
+					'null class'() {
+						assert.doesNotThrow(function () {
+							dom.containsClass(targetElement, null);
+						});
+					}
+				},
+
+				removeClass: {
+					afterEach() {
+						targetElement.className = '';
+					},
+
+					'remove single class'() {
+						dom.addClass(targetElement, 'test');
+						assert.include(targetElement.className, 'test');
+						dom.removeClass(targetElement, 'test');
+						assert.notInclude(targetElement.className, 'test');
+					},
+
+					'remove multiple classes'() {
+						dom.addClass(targetElement, 'test1', 'test2');
+						assert.include(targetElement.className, 'test1');
+						assert.include(targetElement.className, 'test2');
+						dom.removeClass(targetElement, 'test1', 'test2');
+						assert.notInclude(targetElement.className, 'test1');
+						assert.notInclude(targetElement.className, 'test2');
+					},
+
+					'null node'() {
+						assert.doesNotThrow(function () {
+							dom.removeClass(null, 'test');
+						});
+					},
+
+					'invalid class'() {
+						assert.throws(function () {
+							dom.removeClass(targetElement, 'te est');
+						});
+					},
+
+					'null class'() {
+						assert.doesNotThrow(function () {
+							dom.removeClass(targetElement);
+						});
+					},
+
+					'remove nonexistent class'() {
+						assert.doesNotThrow(function () {
+							dom.removeClass(targetElement, 'random');
+						});
+					},
+
+					'remove mutiple nonexistent classes'() {
+						assert.doesNotThrow(function () {
+							dom.removeClass(targetElement, 'random', 'random1');
+						});
+					}
+				},
+
+				toggleClass: {
+					'toggling existing class removes it'() {
+						dom.addClass(targetElement, 'test');
+						assert.include(targetElement.className, 'test');
+						dom.toggleClass(targetElement, 'test');
+						assert.notInclude(targetElement.className, 'test');
+					},
+
+					'toggling nonexistent class adds it'() {
+						dom.toggleClass(targetElement, 'test');
+						assert.include(targetElement.className, 'test');
+					},
+
+					'toggling class using force = true'() {
+						dom.toggleClass(targetElement, 'test', true);
+						assert.include(targetElement.className, 'test');
+						dom.toggleClass(targetElement, 'test', true);
+						assert.include(targetElement.className, 'test');
+					},
+
+					'toggling class using force = false'() {
+						dom.toggleClass(targetElement, 'test', false);
+						assert.notInclude(targetElement.className, 'test');
+						dom.addClass(targetElement, 'test');
+						dom.toggleClass(targetElement, 'test', false);
+						assert.notInclude(targetElement.className, 'test');
+					}
+				}
+			};
+		}
+
+		return {
+			HTMLElement: cssSuite(document.createElement('div')),
+			SVGElement: cssSuite(document.createElement('svg'))
+		};
+	})()
 });
