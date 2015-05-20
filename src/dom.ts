@@ -258,10 +258,10 @@ export function removeClass(element: Element, ...classes: string[]): void {
  * @param force Forces either class addition if true or class removal if flase
  *
  * @example
- * dom.removeClass(document.body, 'loading');
+ * dom.toggleClass(button, 'active');
  *
  * @example
- * dom.removeClas(document.body, 'loading', 'pending');
+ * dom.toggleClass(button, 'active', determineState());
  */
 export function toggleClass(element: Element, className: string, force?: boolean): boolean {
 	let targetElement = <any> element;
