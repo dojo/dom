@@ -1,4 +1,48 @@
 /**
+ * Validates a token for the CSS class manipulation methods.
+ */
+function validateToken(token: string): void {
+	if (token === '') {
+		throw new Error('An invalid or illegal string was specified');
+	}
+	if (/\s/.test(token)) {
+		throw new Error('String contains an invalid character');
+	}
+}
+
+/**
+ * Adds one or more CSS class names to an HTMLElement, without duplication.
+ *
+ * @param element The Element to which to add CSS classes
+ * @param classes One or more CSS class strings to add to the Element
+ *
+ * @example
+ * dom.addClass(document.body, 'loaded');
+ *
+ * @example
+ * dom.addClass(document.body, 'loaded', 'ready');
+ */
+export function addClass(element: HTMLElement, ...classes: string[]): void {
+	// Cast to <any> to support multiple Element types. For more info,
+	// see https://github.com/Microsoft/TypeScript/issues/3220
+	let targetElement = <any> element;
+	if (!targetElement || !classes.length) {
+		return;
+	}
+	let newClasses: string[] = [];
+	for (let className of classes) {
+		validateToken(className);
+		if (!containsClass(targetElement, className)) {
+			// Convert to string to match native classList implementations for values like null
+			newClasses.push(String(className));
+		}
+	}
+	if (newClasses.length) {
+		targetElement.className += (targetElement.className.length ? ' ' : '') + newClasses.join(' ');
+	}
+}
+
+/**
  * Retrieves an element from the document by its ID attribute.
  *
  * @param id ID to match in the DOM
@@ -43,6 +87,25 @@ for (const param in tagWrap) {
 	const tw = tagWrap[param];
 	tw.pre = param === 'option' ? '<select multiple="multiple">' : '<' + tw.join('><') + '>';
 	tw.post = '</' + tw.reverse().join('></') + '>';
+}
+
+/**
+ * Determines whether an HTMLElement has a given CSS class name.
+ *
+ * @param element The Element to check for a CSS class
+ * @param className The CSS class name to check for
+ *
+ * @example
+ * var hasLoaded = dom.containsClass(document.body, 'loaded');
+ */
+export function containsClass(element: HTMLElement, className: string): boolean {
+	let targetElement = <any> element;
+	if (!targetElement) {
+		return;
+	}
+	validateToken(className);
+	let targetClass = ' ' + targetElement.className + ' ';
+	return targetClass.indexOf(' ' + className + ' ') > -1;
 }
 
 /**
@@ -149,4 +212,57 @@ export function remove(node: Node) {
 	if (node.parentNode) {
 		node.parentNode.removeChild(node);
 	}
+}
+
+/**
+ * Removes all instances of one ore more CSS class names from an HTMLElement.
+ *
+ * @param element The Element from which to remove CSS classes
+ * @param classes An array of string CSS classes to remove from the Element
+ *
+ * @example
+ * dom.removeClass(document.body, 'loading');
+ *
+ * @example
+ * dom.removeClass(document.body, 'loading', 'pending');
+ */
+export function removeClass(element: HTMLElement, ...classes: string[]): void {
+	let targetElement = <any> element;
+	if (!targetElement) {
+		return;
+	}
+	let oldClasses: string[] = targetElement.className.split(/\s+/);
+	let length = oldClasses.length;
+	for (let className of classes) {
+		className = String(className);
+		validateToken(className);
+		let index = oldClasses.indexOf(className);
+		while (index !== -1) {
+			oldClasses.splice(index, 1);
+			index = oldClasses.indexOf(className);
+		}
+	}
+	if (oldClasses.length < length) {
+		targetElement.className = oldClasses.join(' ');
+	}
+}
+
+/**
+ * Toggles the presence of a CSS class name on an HTMLElement. An optional
+ * second parameter can be used to force class addition or removal.
+ *
+ * @param element The Element to add or remove classes to or from
+ * @param className The CSS class name add or remove
+ * @param force Forces either class addition if true or class removal if false
+ *
+ * @example
+ * dom.toggleClass(button, 'active');
+ *
+ * @example
+ * dom.toggleClass(button, 'active', isActive);
+ */
+export function toggleClass(element: HTMLElement, className: string, force: boolean = !containsClass(element, className)): boolean {
+	const func = force ? addClass : removeClass;
+	func(element, className);
+	return force;
 }

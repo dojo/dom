@@ -11,14 +11,14 @@ registerSuite({
 		setup() {
 			element = document.createElement('span');
 			element.id = 'id';
+			document.body.appendChild(element);
 		},
 
 		teardown() {
-			element.parentElement.removeChild(element);
+			document.body.removeChild(element);
 		},
 
 		'result found'() {
-			document.body.appendChild(element);
 			assert.strictEqual(dom.byId('id').id, 'id');
 		},
 
@@ -58,6 +58,212 @@ registerSuite({
 			}
 		};
 	})(),
+
+	'CSS class manipulation': {
+		setup() {
+			element = document.createElement('div');
+		},
+
+		afterEach() {
+			element.className = '';
+		},
+
+		addClass: {
+			'add single class'() {
+				assert.notInclude(element.className, 'test');
+				dom.addClass(element, 'test');
+				assert.strictEqual(element.className, 'test');
+			},
+
+			'add multiple classes'() {
+				dom.addClass(element, 'test1', 'test2');
+				assert.include(element.className, 'test1');
+				assert.include(element.className, 'test2');
+			},
+
+			'null node should not throw'() {
+				assert.doesNotThrow(function () {
+					dom.addClass(null, 'test');
+				});
+			},
+
+			'invalid class should throw'() {
+				assert.throws(function () {
+					dom.addClass(element, 'te est');
+				});
+				assert.throws(function () {
+					dom.addClass(element, '');
+				});
+			},
+
+			'null class should add "null" to className'() {
+				assert.doesNotThrow(function () {
+					dom.addClass(element, null);
+					assert.include(element.className, 'null');
+				});
+			},
+
+			'no class should not throw'() {
+				assert.doesNotThrow(function () {
+					dom.addClass(element);
+				});
+			},
+
+			'existing class should not get re-added'() {
+				dom.addClass(element, 'test');
+				dom.addClass(element, 'test');
+				assert.lengthOf(element.className.match(/test/g), 1);
+			}
+		},
+
+		containsClass: {
+			'contains single class'() {
+				dom.addClass(element, 'test');
+				assert.isTrue(dom.containsClass(element, 'test'));
+			},
+
+			'null node should not throw'() {
+				assert.doesNotThrow(function () {
+					dom.containsClass(null, 'test');
+				});
+			},
+
+			'invalid class should throw'() {
+				assert.throws(function () {
+					dom.containsClass(element, 'te est');
+				});
+				assert.throws(function () {
+					dom.containsClass(element, '');
+				});
+			},
+
+			'null class should check for "null" CSS class'() {
+				assert.doesNotThrow(function () {
+					assert.isFalse(dom.containsClass(element, null));
+					dom.addClass(element, null);
+					assert.isTrue(dom.containsClass(element, null));
+				});
+			},
+
+			'should not match partial class names'() {
+				dom.addClass(element, 'foobar');
+				assert.isTrue(dom.containsClass(element, 'foobar'));
+				assert.isFalse(dom.containsClass(element, 'foo'));
+			}
+		},
+
+		removeClass: {
+			'remove single class'() {
+				dom.addClass(element, 'test');
+				assert.include(element.className, 'test');
+				dom.removeClass(element, 'test');
+				assert.notInclude(element.className, 'test');
+			},
+
+			'remove multiple classes'() {
+				element.className = 'test1 test2';
+				assert.include(element.className, 'test1');
+				assert.include(element.className, 'test2');
+				dom.removeClass(element, 'test1', 'test2');
+				assert.notInclude(element.className, 'test1');
+				assert.notInclude(element.className, 'test2');
+			},
+
+			'null node should not throw'() {
+				assert.doesNotThrow(function () {
+					dom.removeClass(null, 'test');
+				});
+			},
+
+			'invalid class should throw'() {
+				assert.throws(function () {
+					dom.removeClass(element, 'te est');
+				});
+				assert.throws(function () {
+					dom.removeClass(element, '');
+				});
+			},
+
+			'null class should remove "null" from className'() {
+				assert.doesNotThrow(function () {
+					element.className = 'null';
+					dom.removeClass(element, null);
+					assert.notInclude(element.className, 'null');
+				});
+			},
+
+			'no class should not throw'() {
+				assert.doesNotThrow(function () {
+					dom.removeClass(element);
+				});
+			},
+
+			'remove nonexistent class'() {
+				dom.addClass(element, 'test');
+				assert.doesNotThrow(function () {
+					dom.removeClass(element, 'random');
+				});
+				assert.include(element.className, 'test');
+
+				assert.doesNotThrow(function () {
+					dom.removeClass(element, 'random', 'random1');
+				});
+			}
+		},
+
+		toggleClass: {
+			'toggling existing class removes it'() {
+				dom.addClass(element, 'test');
+				assert.include(element.className, 'test');
+				dom.toggleClass(element, 'test');
+				assert.notInclude(element.className, 'test');
+			},
+
+			'toggling nonexistent class adds it'() {
+				dom.toggleClass(element, 'test');
+				assert.include(element.className, 'test');
+			},
+
+			'toggling class using force = true'() {
+				dom.toggleClass(element, 'test', true);
+				assert.include(element.className, 'test');
+				dom.toggleClass(element, 'test', true);
+				assert.include(element.className, 'test');
+			},
+
+			'toggling class using force = false'() {
+				dom.toggleClass(element, 'test', false);
+				assert.notInclude(element.className, 'test');
+				dom.addClass(element, 'test');
+				dom.toggleClass(element, 'test', false);
+				assert.notInclude(element.className, 'test');
+			},
+
+			'null node should not throw'() {
+				assert.doesNotThrow(function () {
+					dom.toggleClass(null, 'test');
+				});
+			},
+
+			'invalid class should throw'() {
+				assert.throws(function () {
+					dom.toggleClass(element, 'te st');
+				});
+				assert.throws(function () {
+					dom.toggleClass(element, '');
+				});
+			},
+
+			'null class should toggle "null" on className'() {
+				assert.doesNotThrow(function () {
+					dom.toggleClass(element, null);
+					assert.include(element.className, 'null');
+					dom.toggleClass(element, null);
+					assert.notInclude(element.className, 'null');
+				});
+			}
+		}
+	},
 
 	fromString: (function () {
 		function createTagTest(tagName: string) {
