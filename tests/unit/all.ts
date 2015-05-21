@@ -1,1 +1,2 @@
+import './addCssRule';
 import './dom';
