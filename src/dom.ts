@@ -1,4 +1,11 @@
 import has from 'dojo-core/has';
+import { Handle } from 'dojo-core/interfaces';
+
+// The stylesheet that addCssRule adds rules to
+let extraSheet: CSSStyleSheet;
+
+// Array used to keep track of added rule indexes, used when rules are removed
+const ruleIndices: number[] = [];
 
 /**
  * Validates a token for the CSS class manipulation methods.
@@ -45,6 +52,28 @@ export function addClass(element: HTMLElement, ...classes: string[]): void {
 }
 
 /**
+ * Dynamically add a CSS rule to the document.
+ *
+ * @param selector a CSS selector
+ * @param css a CSS rule string
+ * @return an object that can be used to update and remove the rule
+ *
+ * @example
+ * let handle = addCssRule('div.alert', 'background:red;color:white');
+ */
+export function addCssRule(selector: string, css: string): CssRuleHandle {
+	if (!extraSheet) {
+		const style = document.createElement('style');
+		document.head.appendChild(style);
+		extraSheet = <CSSStyleSheet> style.sheet;
+	}
+	const index = ruleIndices.length;
+	ruleIndices[index] = extraSheet.cssRules.length;
+	extraSheet.insertRule(`${selector}{${css}}`, ruleIndices[index]);
+	return new CssRuleHandle(index);
+}
+
+/**
  * Applies CSS classes to the root element if the specified has features have truthy values.
  *
  * @param features One or more features to test and potentially apply CSS classes based on
@@ -85,6 +114,114 @@ export function contains(parent: Element, node: Node): boolean {
 	// https://connect.microsoft.com/IE/feedback/details/780874/node-contains-is-incorrect
 	// Meanwhile, compareDocumentPosition works in all supported browsers.
 	return Boolean(node.compareDocumentPosition(parent) & Node.DOCUMENT_POSITION_CONTAINS);
+}
+
+/**
+ * A handle that can be used to update or remove a rule added by addCssRule.
+ */
+export class CssRuleHandle implements Handle {
+	constructor(index: number) {
+		Object.defineProperty(this, '_index', {
+			configurable: true,
+			value: index
+		});
+		Object.defineProperty(this, '_style', {
+			configurable: true,
+			value: (<CSSStyleRule> extraSheet.cssRules[ruleIndices[this._index]]).style
+		});
+	}
+
+	protected _index: number;
+	protected _style: CSSStyleDeclaration;
+
+	/**
+	 * Gets the value for a style property in this rule.
+	 *
+	 * @param property a property name
+	 *
+	 * Note that style properties must be specified with CSS names rather than their JavaScript equivalents (e.g.,
+	 * 'font-size' rather than 'fontSize').
+	 *
+	 * @example
+	 * let handle = addCssRule('.foo', 'font-size:8px');
+	 * handle.get('font-size');  // '8px'
+	 */
+	get(property: string) {
+		return this._style.getPropertyValue(property);
+	}
+
+	/**
+	 * Sets the value of a style property in this rule.
+	 *
+	 * @param properties an object mapping property names to string values
+	 * @param property a property name
+	 * @param value a property value
+	 *
+	 * Note that style properties must be specified with CSS names rather than their JavaScript equivalents (e.g.,
+	 * 'font-size' rather than 'fontSize').
+	 *
+	 * @example
+	 * let handle = addCssRule('.foo', 'font-size:8px');
+	 * handle.set('font-size', '10px');
+	 * handle.set({ 'font-style', 'italic', 'text-decoration': 'underline' });
+	 */
+	set(properties: { [ property: string ]: string }): void;
+	set(property: string, value: string): void;
+	set(property: string | { [ name: string ]: string }, value?: string): void {
+		if (typeof property === 'object') {
+			for (const name in property) {
+				this._style.setProperty(name, property[name]);
+			}
+		}
+		else {
+			this._style.setProperty(<string> property, value);
+		}
+	}
+
+	/**
+	 * Removes a style property from this rule.
+	 *
+	 * @param property a property name
+	 *
+	 * @example
+	 * let handle = addCssRule('.foo', 'font-size:8px;font-style:italic;');
+	 * handle.remove('font-size');
+	 */
+	remove(property: string) {
+		this._style.removeProperty(property);
+	}
+
+	/**
+	 * Removes this rule entirely.
+	 *
+	 * @example
+	 * let handle = addCssRule('.foo', 'font-size:8px');
+	 * handle.destroy();
+	 */
+	destroy() {
+		// Remove the rule from the dynamic styesheet
+		const ruleIndex = ruleIndices[this._index];
+		extraSheet.deleteRule(ruleIndex);
+		ruleIndices[this._index] = undefined;
+
+		// Update all the rule indexes that were added after the one being removed to account for the removed rule.
+		const numRules = ruleIndices.length;
+		for (let i = this._index + 1; i < numRules; i++) {
+			if (ruleIndices[i] > ruleIndex) {
+				ruleIndices[i]--;
+			}
+		}
+
+		// Delete the cached style
+		Object.defineProperty(this, '_style', { configurable: false, value: undefined });
+		Object.defineProperty(this, '_index', { configurable: false, value: undefined });
+
+		// Disable this handle.
+		this.destroy = function () {};
+		this.get = function () { return null; };
+		this.remove = function () {};
+		this.set = function () {};
+	}
 }
 
 // Tag trees for element creation, used by fromString

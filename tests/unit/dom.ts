@@ -61,6 +61,139 @@ registerSuite({
 		};
 	})(),
 
+	addCssRule: (function () {
+		let handles: dom.CssRuleHandle[] = [];
+		let node: HTMLElement;
+		let nodeStyle: CSSStyleDeclaration;
+
+		return {
+			setup() {
+				node = document.createElement('div');
+				node.className = 'testDiv';
+				document.body.appendChild(node);
+				nodeStyle = window.getComputedStyle(node);
+			},
+
+			teardown() {
+				document.body.removeChild(node);
+				node = null;
+			},
+
+			afterEach() {
+				let handle: dom.CssRuleHandle;
+				while ((handle = handles.pop())) {
+					handle.destroy();
+					handle = null;
+				}
+			},
+
+			'add rule': {
+				empty() {
+					// Shouldn't throw
+					dom.addCssRule('.testDiv', '');
+				},
+
+				'multiple properties'() {
+					handles.push(dom.addCssRule('.testDiv', 'font-size:4px;font-style:italic'));
+					const style = window.getComputedStyle(node);
+					assert.equal(style.fontSize, '4px');
+					assert.equal(style.fontStyle, 'italic');
+				}
+			},
+
+			'add multiple rules'() {
+				const handle1 = dom.addCssRule('.testDiv', 'font-size:4px');
+				handles.push(handle1);
+				const handle2 = dom.addCssRule('.testDiv', 'font-style:italic');
+				handles.push(handle2);
+
+				let style = window.getComputedStyle(node);
+				assert.equal(style.fontSize, '4px');
+				assert.equal(style.fontStyle, 'italic');
+
+				handle1.destroy();
+				style = window.getComputedStyle(node);
+				assert.equal(style.fontSize, nodeStyle.fontSize);
+				assert.equal(style.fontStyle, 'italic');
+
+				handle2.destroy();
+				style = window.getComputedStyle(node);
+				assert.equal(style.fontSize, nodeStyle.fontSize);
+				assert.equal(style.fontStyle, nodeStyle.fontStyle);
+			},
+
+			'handle _index is non-enumerable'() {
+				const handle = dom.addCssRule('.testDiv', '');
+				handles.push(handle);
+				assert.notInclude(Object.keys(handle), '_list');
+			},
+
+			'#destroy'() {
+				const handle = dom.addCssRule('.testDiv', 'font-size:4px');
+				handle.destroy();
+
+				// Verify that that styles were removed
+				const style = window.getComputedStyle(node);
+				assert.equal(style.fontSize, nodeStyle.fontSize);
+
+				// Use handle after destroying
+				handle.destroy();
+				handle.set('', '');
+				handle.remove('');
+				assert.isNull(handle.get('font-size'));
+			},
+
+			'#get'() {
+				const handle = dom.addCssRule('.testDiv', 'font-size:4px;font-style:italic');
+				handles.push(handle);
+				assert.equal(handle.get('font-size'), '4px');
+				assert.equal(handle.get('font-style'), 'italic');
+
+			},
+
+			'#remove'() {
+				const handle = dom.addCssRule('.testDiv', 'font-size:4px;font-style:italic');
+				handles.push(handle);
+				handle.remove('font-size');
+
+				// Verify that that only font-size was removed
+				const style = window.getComputedStyle(node);
+				assert.equal(style.fontSize, nodeStyle.fontSize);
+				assert.equal(style.fontStyle, 'italic');
+			},
+
+			'#set': {
+				single() {
+					const handle = dom.addCssRule('.testDiv', '');
+					handles.push(handle);
+					handle.set('font-size', '4px');
+
+					// Check that property retrieval works
+					assert.equal(handle.get('font-size'), '4px');
+
+					// Verify that that the style is actually applied to page
+					const style = window.getComputedStyle(node);
+					assert.equal(style.fontSize, '4px');
+				},
+
+				multiple() {
+					const handle = dom.addCssRule('.testDiv', '');
+					handles.push(handle);
+					handle.set({ 'font-size': '4px', 'font-style': 'italic' });
+
+					// Check that property retrieval works
+					assert.equal(handle.get('font-size'), '4px');
+					assert.equal(handle.get('font-style'), 'italic');
+
+					// Verify that that the style is actually applied to page
+					const style = window.getComputedStyle(node);
+					assert.equal(style.fontSize, '4px');
+					assert.equal(style.fontStyle, 'italic');
+				}
+			}
+		};
+	})(),
+
 	byId: {
 		setup() {
 			element = document.createElement('span');
