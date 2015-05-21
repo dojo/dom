@@ -5,6 +5,13 @@ type FormValue = { [ key: string ]: any };
 /**
  * Fills in a DOM form using values from a JavaScript object. Note that fields not specified in the value object will be
  * cleared.
+ *
+ * @param form the DOM form to set values in
+ * @param object an object containing values for each field in the form
+ *
+ * @example
+ * let formNode = document.getElementById('aForm');
+ * form.fromObject(formNode, { firstName: 'foo', lastName: 'bar' });
  */
 export function fromObject(form: HTMLFormElement, object: FormValue): void {
 	const elements = form.elements;
@@ -142,6 +149,14 @@ function storeFieldValue(object: FormValue, field: HTMLInputElement) {
 
 /**
  * Serializes a form node to a JavaScript object.
+ *
+ * @param form the DOM form to get values from
+ * @returns an object mapping the name of each form field to its value
+ *
+ * @example
+ * let formNode = document.getElementById('aForm');
+ * let values = form.toObject(formNode);
+ * console.log(values.firstName); // 'foo'
  */
 export function toObject(form: HTMLFormElement): FormValue {
 	const value: FormValue = {};
