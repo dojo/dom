@@ -1,11 +1,65 @@
 import registerSuite = require('intern!object');
 import assert = require('intern/chai!assert');
+import { add as hasAdd, cache as hasCache } from 'dojo-core/has';
 import * as dom from 'src/dom';
 
 let element: HTMLElement;
 
 registerSuite({
 	name: 'dom',
+
+	applyFeatureClass: (function () {
+		let addedFeatures: string[] = [];
+
+		function addFeature(feature: string, value: any) {
+			hasAdd(feature, value);
+			addedFeatures.push(feature);
+		}
+
+		return {
+			afterEach() {
+				document.documentElement.className = '';
+				for (let feature of addedFeatures) {
+					delete hasCache[feature];
+				}
+				addedFeatures = [];
+			},
+
+			'should add class for truthy features'() {
+				addFeature('test-boolean', true);
+				addFeature('test-number', 1);
+				addFeature('test-string', 'yes');
+				addFeature('test-lazy', function () {
+					return true;
+				});
+				addFeature('test-not-here', true);
+
+				dom.applyFeatureClass('test-boolean', 'test-number', 'test-string', 'test-lazy');
+				assert.strictEqual(document.documentElement.className,
+					'has-test-boolean has-test-number has-test-string has-test-lazy');
+			},
+
+			'should not add class for falsy features'() {
+				addFeature('test-boolean', false);
+				addFeature('test-number', 0);
+				addFeature('test-string', '');
+				addFeature('test-lazy', function () {
+					return false;
+				});
+				assert.strictEqual(document.documentElement.className, '');
+			},
+
+			'should replace spaces with dashes for class names'() {
+				// This would throw if we don't replace spaces,
+				// due to underlying use of addClass which adheres to DOMTokenList#add conditions
+				assert.doesNotThrow(function () {
+					addFeature('test space', true);
+				});
+				dom.applyFeatureClass('test space');
+				assert.strictEqual(document.documentElement.className, 'has-test-space');
+			}
+		};
+	})(),
 
 	byId: {
 		setup() {

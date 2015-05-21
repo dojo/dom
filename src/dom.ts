@@ -1,3 +1,5 @@
+import has from 'dojo-core/has';
+
 /**
  * Validates a token for the CSS class manipulation methods.
  */
@@ -40,6 +42,22 @@ export function addClass(element: HTMLElement, ...classes: string[]): void {
 	if (newClasses.length) {
 		targetElement.className += (targetElement.className.length ? ' ' : '') + newClasses.join(' ');
 	}
+}
+
+/**
+ * Applies CSS classes to the root element if the specified has features have truthy values.
+ *
+ * @param features One or more features to test and potentially apply CSS classes based on
+ */
+export function applyFeatureClass(...features: string[]) {
+	// args will be applied to addClass, so start with the element classes will be added to
+	let args: any[] = [ document.documentElement ];
+	for (let feature of features) {
+		if (has(feature)) {
+			args.push('has-' + feature.replace(/\s/g, '-'));
+		}
+	}
+	addClass.apply(null, args);
 }
 
 /**
