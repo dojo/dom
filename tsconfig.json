@@ -16,6 +16,7 @@
 	],
 	"files": [
 		"./src/dom.ts",
+		"./src/form.ts",
 		"./src/main.ts",
 		"./tests/functional/all.ts",
 		"./tests/intern-local.ts",
@@ -29,6 +30,7 @@
 		"./tests/typings/tsd.d.ts",
 		"./tests/unit/all.ts",
 		"./tests/unit/dom.ts",
+		"./tests/unit/form.ts",
 		"./typings/tsd.d.ts"
 	]
 }
