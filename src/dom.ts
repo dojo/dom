@@ -131,21 +131,29 @@ export function containsClass(element: HTMLElement, className: string): boolean 
  * Creates an Element
  *
  * @param tagName Type of element to create
- * @param kwArgs An object containing attributes to add to the Element. If an "attributes"
+ * @param kwArgs An object containing properties to add to the Element. If an "attributes"
  * property is present, each member of this sub-object will be added to the Element via element.setAttribute
  * @param children An array of either Nodes or strings, the latter of which will be converted to Nodes via dom.fromString
  *
  * @example
- * var div = dom.create('div', {'data-index': 0, attributes: {'class': 'loaded'}});
+ * var div = dom.create('div', {className: 'loaded', attributes: {'data-index': '1'}});
  *
  * @example
- * var div = dom.create('ul', null, [dom.create('li'), dom.create('li')]);
+ * var div = dom.create('ul', null, [ dom.create('li'), dom.create('li') ]);
  * 
- * @examples
- * var div = dom.create('ul', null, [dom.create('li'), dom.create('li')]);
+ * @example
+ * var div = dom.create('div', null, [ 'hello', 'world' ]);
  */
 export function create(tagName: string, kwArgs?: dom.CreateArgs, children?: (Node|string)[]): HTMLElement {
 	var element = document.createElement(tagName);
+	if (children) {
+		for (let child of children) {
+			if (typeof child === 'string') {
+				child = document.createTextNode(<string> child);
+			}
+			place(<Node> child, Position.LastIn, element);
+		}
+	}
 	if (kwArgs) {
 		for (let property in kwArgs) {
 			if (property === 'attributes') {
@@ -156,14 +164,6 @@ export function create(tagName: string, kwArgs?: dom.CreateArgs, children?: (Nod
 			else {
 				(<any> element)[property] = kwArgs[property];
 			}
-		}
-	}
-	if (children) {
-		for (let child of children) {
-			if (typeof child === 'string') {
-				child = fromString(<string> child);
-			}
-			place(<Node> child, Position.LastIn, element);
 		}
 	}
 	return element;
