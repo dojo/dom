@@ -108,52 +108,6 @@ for (const param in tagWrap) {
 	tw.post = '</' + tw.reverse().join('></') + '>';
 }
 
-function validateClass(token: string): void {
-	if (token === '') {
-		throw new Error('An invalid or illegal string was specified');
-	}
-	if (/\s/.test(token)) {
-		throw new Error('String contains an invalid character');
-	}
-}
-
-/**
- * Adds one or more CSS class names to an Element without duplication
- *
- * @param element The Element to which to add CSS classes
- * @param classes One or more CSS class strings to add to the Element
- *
- * @example
- * dom.addClass(document.body, 'loaded');
- *
- * @example
- * dom.addClass(document.body, 'loaded', 'ready');
- */
-export function addClass(element: Element, ...classes: string[]): void {
-	// Cast to <any> to support multiple Element types. For more info,
-	// see https://github.com/Microsoft/TypeScript/issues/3220
-	let targetElement = <any> element;
-	if (!targetElement || classes.length === 0) {
-		return;
-	}
-	let newClasses: string[] = [];
-	for (let className of classes) {
-		validateClass(className);
-		if (!containsClass(targetElement, className)) {
-			// Convert to string so "null" can be added; matches classList
-			// API which allows null to be added as a class name
-			newClasses.push(String(className));
-		}
-	}
-	if (newClasses.length > 0) {
-		if (targetElement.className.length > 0) {
-			targetElement.className += (' ' + newClasses.join(' '));
-		} else {
-			targetElement.className += (newClasses.join(' '));
-		}
-	}
-}
-
 /**
  * Determines whether an HTMLElement has a given CSS class name.
  *
@@ -169,28 +123,6 @@ export function containsClass(element: HTMLElement, className: string): boolean 
 		return;
 	}
 	validateToken(className);
-	let targetClass = ' ' + targetElement.className + ' ';
-	return targetClass.indexOf(' ' + className + ' ') > -1;
-}
-
-/**
- * Determines whether an Element has a CSS class name
- *
- * @param element The Element to check for a CSS class
- * @param className The CSS class name to check for
- *
- * @example
- * var loaded = dom.containsClass(document.body, 'loaded');
- */
-export function containsClass(element: Element, className: string): boolean {
-	let targetElement = <any> element;
-	if (!targetElement) {
-		return;
-	}
-	if (arguments.length === 1) {
-		throw new Error('A class name is required');
-	}
-	validateClass(className);
 	let targetClass = ' ' + targetElement.className + ' ';
 	return targetClass.indexOf(' ' + className + ' ') > -1;
 }
