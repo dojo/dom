@@ -137,10 +137,7 @@ export class CssRuleHandle implements Handle {
 	/**
 	 * Gets the value for a style property in this rule.
 	 *
-	 * @param property a property name
-	 *
-	 * Note that style properties must be specified with CSS names rather than their JavaScript equivalents (e.g.,
-	 * 'font-size' rather than 'fontSize').
+	 * @param property a CSS property name (e.g., 'font-size')
 	 *
 	 * @example
 	 * let handle = addCssRule('.foo', 'font-size:8px');
@@ -154,11 +151,8 @@ export class CssRuleHandle implements Handle {
 	 * Sets the value of a style property in this rule.
 	 *
 	 * @param properties an object mapping property names to string values
-	 * @param property a property name
+	 * @param property a CSS property name (e.g., 'font-size')
 	 * @param value a property value
-	 *
-	 * Note that style properties must be specified with CSS names rather than their JavaScript equivalents (e.g.,
-	 * 'font-size' rather than 'fontSize').
 	 *
 	 * @example
 	 * let handle = addCssRule('.foo', 'font-size:8px');
@@ -181,7 +175,7 @@ export class CssRuleHandle implements Handle {
 	/**
 	 * Removes a style property from this rule.
 	 *
-	 * @param property a property name
+	 * @param property a CSS property name (e.g., 'font-size')
 	 *
 	 * @example
 	 * let handle = addCssRule('.foo', 'font-size:8px;font-style:italic;');
