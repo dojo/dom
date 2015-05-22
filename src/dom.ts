@@ -1,4 +1,5 @@
 import has from 'dojo-core/has';
+import * as dom from './interfaces';
 
 /**
  * Validates a token for the CSS class manipulation methods.
@@ -192,6 +193,48 @@ export function containsClass(element: Element, className: string): boolean {
 	validateClass(className);
 	let targetClass = ' ' + targetElement.className + ' ';
 	return targetClass.indexOf(' ' + className + ' ') > -1;
+}
+
+/*
+ * Creates an Element
+ *
+ * @param tagName Type of element to create
+ * @param kwArgs An object containing attributes to add to the Element. If an "attributes"
+ * property is present, each member of this sub-object will be added to the Element via element.setAttribute
+ * @param children An array of either Nodes or strings, the latter of which will be converted to Nodes via dom.fromString
+ *
+ * @example
+ * var div = dom.create('div', {'data-index': 0, attributes: {'class': 'loaded'}});
+ *
+ * @example
+ * var div = dom.create('ul', null, [dom.create('li'), dom.create('li')]);
+ * 
+ * @examples
+ * var div = dom.create('ul', null, [dom.create('li'), dom.create('li')]);
+ */
+export function create(tagName: string, kwArgs?: dom.CreateArgs, children?: (Node|string)[]): HTMLElement {
+	var element = document.createElement(tagName);
+	if (kwArgs) {
+		for (let property in kwArgs) {
+			if (property === 'attributes') {
+				for (let attribute in kwArgs.attributes) {
+					element.setAttribute(attribute, kwArgs.attributes[attribute]);
+				}
+			}
+			else {
+				(<any> element)[property] = kwArgs[property];
+			}
+		}
+	}
+	if (children) {
+		for (let child of children) {
+			if (typeof child === 'string') {
+				child = fromString(<string> child);
+			}
+			place(<Node> child, Position.LastIn, element);
+		}
+	}
+	return element;
 }
 
 /**
