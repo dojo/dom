@@ -1,4 +1,10 @@
-const EXCLUDED_TAGS = /\b(?:file|submit|image|reset|button)\b/;
+const EXCLUDED_TAGS = { 
+	'file': true,
+	'submit': true,
+	'image': true,
+	'reset': true,
+	'button': true
+};
 
 type FormValue = { [ key: string ]: any };
 
@@ -20,7 +26,7 @@ export function fromObject(form: HTMLFormElement, object: FormValue): void {
 		const type = element.type;
 		const name = element.name;
 
-		if (!name || EXCLUDED_TAGS.test(type) || element.disabled) {
+		if (!name || (type in EXCLUDED_TAGS) || element.disabled) {
 			continue;
 		}
 
@@ -39,8 +45,6 @@ export function fromObject(form: HTMLFormElement, object: FormValue): void {
 
 			case 'select-multiple':
 				const multiSelectElement: HTMLSelectElement = <any> element;
-				// A multi-select has no selection by default
-				multiSelectElement.selectedIndex = -1;
 				if (name in object) {
 					const selectValue = Array.isArray(object[name]) ? object[name] : [ object[name] ];
 					for (let i = 0; i < multiSelectElement.options.length; i++) {
@@ -48,18 +52,22 @@ export function fromObject(form: HTMLFormElement, object: FormValue): void {
 						option.selected = selectValue.indexOf(option.value) !== -1;
 					}
 				}
+				else {
+					multiSelectElement.selectedIndex = -1;
+				}
 				break;
 
 			case 'select-one':
 				const selectElement: HTMLSelectElement = <any> element;
-				// A single-select selects the first item by default
-				selectElement.selectedIndex = 0;
 				if (name in object) {
 					const selectValue = object[name];
 					for (let i = 0; i < selectElement.options.length; i++) {
 						const option = selectElement.options[i];
-						option.selected = selectValue.indexOf(selectValue) !== -1;
+						option.selected = selectValue === option.value;
 					}
+				}
+				else {
+					selectElement.selectedIndex = 0;
 				}
 				break;
 
@@ -88,30 +96,17 @@ function getValue(field: HTMLInputElement): string | string[] {
 	}
 	else if (field.multiple) {
 		// For fields with the 'multiple' attribute set, gather the values of all descendant <option> elements that are
-		// selected.
-		const values = <string[]> [];
-		const elements = [ field.firstElementChild ];
-		while (elements.length > 0) {
-			for (let element = elements.pop(); element; element = element.nextElementSibling) {
-				// tagName in HTML will always contain the canonical uppercase form
-				if (element.tagName === 'OPTION') {
-					const optionElement = <HTMLOptionElement> element;
-					if (optionElement.selected) {
-						values.push(optionElement.value);
-					}
-				}
-				else {
-					if (element.nextElementSibling) {
-						elements.push(element.nextElementSibling);
-					}
-					if (element.firstElementChild) {
-						elements.push(element.firstElementChild);
-					}
-					break;
-				}
-			}
+		// selected. This code assumes the field is a select or datalist (something with options).
+		const options = field.querySelectorAll('option:checked');
+		const numOptions = options.length;
+		if (numOptions === 1) {
+			value = (<HTMLOptionElement> options[0]).value;
 		}
-		if (values.length > 0) {
+		else if (numOptions > 1) {
+			const values = <string[]> [];
+			for (let i = 0; i < numOptions; i++) {
+				values.push((<HTMLOptionElement> options[i]).value);
+			}
 			value = values;
 		}
 	}
@@ -164,7 +159,7 @@ export function toObject(form: HTMLFormElement): FormValue {
 
 	for (let i = 0; i < elements.length; i++) {
 		const element = <HTMLInputElement> elements[i];
-		if (element.name && !EXCLUDED_TAGS.test(element.type) && !element.disabled) {
+		if (element.name && !(element.type in EXCLUDED_TAGS) && !element.disabled) {
 			storeFieldValue(value, element);
 		}
 	}

@@ -4,181 +4,424 @@ import * as form from 'src/form';
 
 type FormValue = { [ key: string ]: any };
 
-const form1 = document.createElement('form');
-const form2 = document.createElement('form');
-const form3 = document.createElement('form');
-const form4 = document.createElement('form');
-const form5 = document.createElement('form');
-const form6 = document.createElement('form');
-
-const value1 = {
-	blah: 'blah'
-};
-const value1_set = <FormValue> {
-	blah: 'blargh',
-	cb: 'blah'
-};
-
-const value2 = {
-	blah: 'blah',
-	multi: [ 'thud', 'thonk' ],
-	single: 'thud',
-	textarea: 'textarea_value'
-};
-const value2_set = <FormValue> {
-	blah: 'blargh',
-	multi: [ 'blah', 'thonk' ],
-	single: 'thonk',
-};
-
-const value3 = {
-	spaces: 'string with spaces'
-};
-const value3_set = <FormValue> {
-	spaces: 'fewer words',
-	multi: 'blah'
-};
-
-const value4 = {
-	action: 'Form with input named action'
-};
-
-const value5 = {
-	'blåh': 'bláh'
-};
-
-const value6 = {
-	cb_group: 'foo',
-	radio_group: 'bam'
-};
-const value6_1 = {
-	cb_group: 'boo',
-	radio_group: 'baz'
-};
-const value6_2 = {
-	cb_group: [ 'foo', 'boo' ],
-	radio_group: 'baz'
-};
-const value6_set = <FormValue> {
-	cb_group: [ 'boo', 'bar', 'baz' ],
-	radio_group: 'baz'
-}
+let testForm: HTMLFormElement;
 
 registerSuite({
 	name: 'dom/form',
 
-	beforeEach() {
-		form1.innerHTML = `
-			<form id="f1" style="border: 1px solid black;">
-				<input id="blah" type="text" name="blah" value="blah">
-				<input id="no_value" type="text" name="no_value" value="blah" disabled>
-				<input id="cb" type="checkbox" name="cb" value="blah">
-				<input  id="no_value2" type="button" name="no_value2" value="blah">
-			</form>
-		`;
-		form2.innerHTML = `
-			<form id="f2" style="border: 1px solid black;">
-				<input id="blah" type="TEXT" name="blah" value="blah">
-				<input id="no_value" type="text" name="no_value" value="blah" disabled>
-				<input id="no_value2" type="BUTTON" name="no_value2" value="blah">
-				<select id="single" type="select" name="single">
-					<option value="blah">blah</option>
-					<option value="thud" selected>thud</option>
-					<option value="thonk">thonk</option>
-				</select>
-				<select id="multi" type="SELECT" multiple name="multi">
-					<optgroup label="Stuff">
-						<option value="blah">blah</option>
-						<option value="thud" selected>thud</option>
-					</optgroup>
-					<optgroup label="Other Stuff">
-						<option value="thonk" selected>thonk</option>
-					</optgroup>
-				</select>
-				<textarea id="textarea" name="textarea">textarea_value</textarea>
-				<button id="button1" name="button1" value="buttonValue1">This is a button that should not be in formToObject.</button>
-				<input id="fileParam1" type="file" name="fileParam1" value="fileValue1"> File input should not show up in formToObject.
-			</form>
-		`;
-		form3.innerHTML = `
-			<form id="f3" style="border: 1px solid black;">
-				<input id="spaces" type="hidden" name="spaces" value="string with spaces">
-				<select id="multi" type="select" multiple name="multi">
-					<option value="blah">blah</option>
-					<option value="thud">thud</option>
-				</select>
-			</form>
-		`;
-		form4.innerHTML = `
-			<form id="f4" style="border: 1px solid black;" action="xhrDummyMethod.php">
-				<input id="action" type="hidden" name="action" value="Form with input named action">
-			</form>
-		`;
-		form5.innerHTML = `
-			<form id="f5" style="border: 1px solid black;">
-				<input id="blah" type="text" name="blåh" value="bláh">
-				<input id="no_value" type="text" name="no_value" value="blah" disabled>
-				<input id="no_value2" type="button" name="no_value2" value="blah">
-			</form>
-		`;
-		form6.innerHTML = `
-			<form id="f6" style="border: 1px solid black;">
-				<input id="checkbox1" type="checkbox" name="cb_group" value="foo" checked>
-				<input id="checkbox2" type="checkbox" name="cb_group" value="boo">
-				<input id="checkbox3" type="checkbox" name="cb_group" value="bar">
-				<input id="checkbox4" type="checkbox" name="cb_group" value="baz">
-				<input id="radio1" type="radio" name="radio_group" value="baz">
-				<input id="radio2" type="radio" name="radio_group" value="bam" checked>
-			</form>
-		`;
+	setup() {
+		testForm = document.createElement('form');
 	},
 
-	'.fromObject'() {
-		form.fromObject(form1, value1_set);
-		assert.strictEqual(form1['blah'].value, value1_set['blah']);
+	'.fromObject': {
+		text() {
+			testForm.innerHTML = `
+				<input name="text" type="text">
+				<input name="hidden" type="hidden">
+				<input name="password" type="password">
+				<input name="implicit">
+			`;
+			const expected = <FormValue> {
+				text: 'foo',
+				hidden: 'bar',
+				password: 'baz',
+				implicit: 'qux'
+			};
 
-		form.fromObject(form2, value2_set);
-		assert.strictEqual(form2['blah'].value, value2_set['blah']);
-		assert.strictEqual(form2['multi'].options[0].selected, true);
-		assert.strictEqual(form2['multi'].options[1].selected, false);
-		assert.strictEqual(form2['multi'].options[2].selected, true);
-		assert.strictEqual(form2['single'].options[0].selected, false);
-		assert.strictEqual(form2['single'].options[1].selected, false);
-		assert.strictEqual(form2['single'].options[2].selected, true);
-		assert.strictEqual(form2['textarea'].value, '');
+			form.fromObject(testForm, expected);
+			for (const name in expected) {
+				assert.strictEqual(testForm[name].value, expected[name]);
+			}
+		},
 
-		form.fromObject(form3, value3_set);
-		assert.strictEqual(form3['spaces'].value, value3_set['spaces']);
+		checkbox() {
+			testForm.innerHTML = `
+				<input name="cb1" type="checkbox" value="foo">
+				<input name="cb1" type="checkbox" value="bar">
+				<input name="cb2" type="checkbox" value="baz">
+				<input name="cb3" type="checkbox">
+			`;
 
-		form.fromObject(form6, value6_set);
-		assert.isFalse(form6['checkbox1'].checked);
-		assert.isTrue(form6['checkbox2'].checked);
-		assert.isTrue(form6['checkbox3'].checked);
-		assert.isTrue(form6['checkbox4'].checked);
-		assert.isTrue(form6['radio1'].checked);
-		assert.isFalse(form6['radio2'].checked);
+			// Set everything
+			form.fromObject(testForm, { cb1: [ 'foo', 'bar' ], cb2: 'baz', cb3: 'on' });
+			assert.isTrue(testForm['cb1'][0].checked);
+			assert.isTrue(testForm['cb1'][1].checked);
+			assert.isTrue(testForm['cb2'].checked);
+			assert.isTrue(testForm['cb3'].checked);
+
+			// Set group to single value
+			form.fromObject(testForm, { cb1: 'foo' });
+			assert.isTrue(testForm['cb1'][0].checked);
+			assert.isFalse(testForm['cb1'][1].checked);
+			assert.isFalse(testForm['cb2'].checked);
+			assert.isFalse(testForm['cb3'].checked);
+
+			// Set field to an invalid value
+			form.fromObject(testForm, { cb2: 'bar' });
+			assert.isFalse(testForm['cb1'][0].checked);
+			assert.isFalse(testForm['cb1'][1].checked);
+			assert.isFalse(testForm['cb2'].checked);
+			assert.isFalse(testForm['cb3'].checked);
+		},
+
+		radio() {
+			testForm.innerHTML = `
+				<input name="r1" type="radio" value="foo">
+				<input name="r1" type="radio" value="bar">
+				<input name="r1" type="radio" value="baz">
+			`;
+
+			// Set value
+			form.fromObject(testForm, { r1: 'foo' });
+			assert.isTrue(testForm['r1'][0].checked);
+			assert.isFalse(testForm['r1'][1].checked);
+			assert.isFalse(testForm['r1'][2].checked);
+
+			// Clear value
+			form.fromObject(testForm, {});
+			assert.isFalse(testForm['r1'][0].checked);
+			assert.isFalse(testForm['r1'][1].checked);
+			assert.isFalse(testForm['r1'][2].checked);
+		},
+
+		'select-single': (function () {
+			function runTest() {
+				const options = testForm['select'].options;
+				form.fromObject(testForm, { select: 'bar' });
+				assert.isFalse(options[0].selected);
+				assert.isTrue(options[1].selected);
+				assert.isFalse(options[2].selected);
+				assert.isFalse(options[3].selected);
+			}
+
+			return {
+				flat() {
+					testForm.innerHTML = `
+						<select name="select">
+							<option value="foo">foo</option>
+							<option value="bar">bar</option>
+							<option value="baz">baz</option>
+							<option value="qux">qux</option>
+						</select>
+					`;
+					runTest();
+				},
+
+				group() {
+					testForm.innerHTML = `
+						<select name="select">
+							<option value="foo">foo</option>
+							<optgroup label="stuff">
+								<option value="bar">bar</option>
+								<option value="baz">baz</option>
+							</optgroup>
+							<optgroup label="stuff">
+								<option value="qux">qux</option>
+							</optgroup>
+						</select>
+					`;
+					runTest();
+				},
+
+				clear() {
+					testForm.innerHTML = `
+						<select name="select">
+							<option value="foo">foo</option>
+							<option value="bar">bar</option>
+							<option value="baz">baz</option>
+						</select>
+					`;
+					form.fromObject(testForm, {});
+					const options = testForm['select'].options;
+					// Expect that the first option is selected if no other is explicitly selected
+					assert.isTrue(options[0].selected);
+					assert.isFalse(options[1].selected);
+					assert.isFalse(options[2].selected);
+				}
+			};
+		})(),
+
+		'select-multiple': (function () {
+			function runTest() {
+				const options = testForm['select'].options;
+
+				// Set single value
+				form.fromObject(testForm, { select: 'foo' });
+				assert.isTrue(options[0].selected);
+				assert.isFalse(options[1].selected);
+				assert.isFalse(options[2].selected);
+				assert.isFalse(options[3].selected);
+
+				// Set multiple values
+				form.fromObject(testForm, { select: [ 'bar', 'baz' ] });
+				assert.isFalse(options[0].selected);
+				assert.isTrue(options[1].selected);
+				assert.isTrue(options[2].selected);
+				assert.isFalse(options[3].selected);
+			}
+
+			return {
+				flat() {
+					testForm.innerHTML = `
+						<select multiple name="select">
+							<option value="foo">foo</option>
+							<option value="bar">bar</option>
+							<option value="baz">baz</option>
+							<option value="qux">qux</option>
+						</select>
+					`;
+					runTest();
+				},
+
+				group() {
+					testForm.innerHTML = `
+						<select multiple name="select">
+							<option value="foo">foo</option>
+							<optgroup label="stuff">
+								<option value="bar">bar</option>
+								<option value="baz">baz</option>
+							</optgroup>
+							<optgroup label="stuff">
+								<option value="qux">qux</option>
+							</optgroup>
+						</select>
+					`;
+					runTest();
+				},
+
+				clear() {
+					testForm.innerHTML = `
+						<select multiple name="select">
+							<option value="foo">foo</option>
+							<option value="bar">bar</option>
+						</select>
+					`;
+					form.fromObject(testForm, {});
+					const options = testForm['select'].options;
+					assert.isFalse(options[0].selected);
+					assert.isFalse(options[1].selected);
+				}
+			}
+		})(),
+
+		disabled() {
+			testForm.innerHTML = `
+				<input name="text" type="text">
+				<input name="disabled" type="text" disabled>
+			`;
+			form.fromObject(testForm, { text: 'foo', disabled: 'bar' });
+			assert.strictEqual(testForm['text'].value, 'foo');
+			assert.strictEqual(testForm['disabled'].value, '');
+		},
+
+		'capitalization'() {
+			testForm.innerHTML = `
+				<input name="text1" type="TEXT">
+				<INPUT name="text2" type="text">
+			`;
+			form.fromObject(testForm, { text1: 'foo', text2: 'bar' });
+			assert.strictEqual(testForm['text1'].value, 'foo');
+			assert.strictEqual(testForm['text2'].value, 'bar');
+		}
 	},
 
-	'.toObject'() {
-		assert.deepEqual(form.toObject(form1), value1);
-		assert.deepEqual(form.toObject(form2), value2);
-		assert.deepEqual(form.toObject(form3), value3);
-		assert.deepEqual(form.toObject(form4), value4);
-		assert.deepEqual(form.toObject(form5), value5);
-		assert.deepEqual(form.toObject(form6), value6);
+	'.toObject': {
+		text() {
+			testForm.innerHTML = `
+				<input name="text" type="text" value="foo">
+				<input name="hidden" type="hidden" value="bar">
+				<input name="password" type="password" value="baz">
+				<input name="implicit" value="qux">
+				<input name="empty">
+			`;
+			assert.deepEqual(form.toObject(testForm), {
+				text: 'foo',
+				hidden: 'bar',
+				password: 'baz',
+				implicit: 'qux',
+				empty: ''
+			});
+		},
 
-		form6['checkbox1'].checked = false;
-		form6['checkbox2'].checked = true;
-		form6['radio1'].checked = true;
-		assert.deepEqual(form.toObject(form6), value6_1);
+		checkbox: {
+			'single check'() {
+				testForm.innerHTML = `
+					<input name="cb1" type="checkbox" value="foo">
+					<input name="cb1" type="checkbox" value="bar" checked>
+				`;
+				assert.deepEqual(form.toObject(testForm), { cb1: 'bar' });
+			},
 
-		form6['checkbox3'].checked = true;
-		form6['checkbox4'].checked = true;
-		assert.deepEqual(form.toObject(form6), value6_set);
+			'multiple checks'() {
+				testForm.innerHTML = `
+					<input name="cb1" type="checkbox" value="foo" checked>
+					<input name="cb1" type="checkbox" value="bar" checked>
+					<input name="cb1" type="checkbox" value="baz" checked>
+					<input name="cb1" type="checkbox" value="qux">
+				`;
+				assert.deepEqual(form.toObject(testForm), { cb1: [ 'foo', 'bar', 'baz' ] });
+			},
 
-		form6['checkbox1'].checked = true;
-		form6['checkbox3'].checked = false;
-		form6['checkbox4'].checked = false;
-		assert.deepEqual(form.toObject(form6), value6_2);
+			'implicit value'() {
+				testForm.innerHTML = '<input name="implicit" type="checkbox" checked>';
+				assert.deepEqual(form.toObject(testForm), { implicit: 'on' });
+			}
+		},
+
+		radio() {
+			testForm.innerHTML = `
+				<input name="r1" type="radio" value="foo">
+				<input name="r1" type="radio" value="bar" checked>
+				<input name="r1" type="radio" value="baz">
+			`;
+			assert.deepEqual(form.toObject(testForm), { r1: 'bar' });
+
+		},
+
+		'select-single': {
+			flat() {
+				testForm.innerHTML = `
+					<select name="select">
+						<option value="foo">foo</option>
+						<option value="bar" selected>bar</option>
+						<option value="baz">baz</option>
+						<option value="qux">qux</option>
+					</select>
+				`;
+				assert.deepEqual(form.toObject(testForm), { select: 'bar' });
+			},
+
+			group() {
+				testForm.innerHTML = `
+					<select name="select">
+						<option value="foo">foo</option>
+						<optgroup label="stuff">
+							<option value="bar" selected>bar</option>
+							<option value="baz">baz</option>
+						</optgroup>
+						<optgroup label="stuff">
+							<option value="qux">qux</option>
+						</optgroup>
+					</select>
+				`;
+				assert.deepEqual(form.toObject(testForm), { select: 'bar' });
+			}
+		},
+
+		'select-multiple': {
+			none() {
+				testForm.innerHTML = `
+					<select multiple name="select">
+						<option value="foo">foo</option>
+						<option value="bar">bar</option>
+					</select>
+				`;
+				assert.deepEqual(form.toObject(testForm), {});
+			},
+
+			single() {
+				testForm.innerHTML = `
+					<select multiple name="select">
+						<option value="foo">foo</option>
+						<option value="bar" selected>bar</option>
+						<option value="baz">baz</option>
+						<option value="qux">qux</option>
+					</select>
+				`;
+				assert.deepEqual(form.toObject(testForm), { select: 'bar' });
+			},
+
+			flat() {
+				testForm.innerHTML = `
+					<select multiple name="select">
+						<option value="foo">foo</option>
+						<option value="bar" selected>bar</option>
+						<option value="baz">baz</option>
+						<option value="qux" selected>qux</option>
+					</select>
+				`;
+				assert.deepEqual(form.toObject(testForm), { select: [ 'bar', 'qux' ] });
+			},
+
+			group() {
+				testForm.innerHTML = `
+					<select multiple name="select">
+						<option value="foo">foo</option>
+						<optgroup label="stuff">
+							<option value="bar" selected>bar</option>
+							<option value="baz">baz</option>
+						</optgroup>
+						<optgroup label="stuff">
+							<option value="qux" selected>qux</option>
+						</optgroup>
+					</select>
+				`;
+				assert.deepEqual(form.toObject(testForm), { select: [ 'bar', 'qux' ] });
+			}
+		},
+
+		disabled() {
+			testForm.innerHTML = `
+				<input name="text" type="text" value="foo">
+				<input name="disabled" type="text" value="bar" disabled>
+			`;
+			assert.deepEqual(form.toObject(testForm), { text: 'foo' });
+		},
+
+		'capitalization'() {
+			testForm.innerHTML = `
+				<input name="text1" type="TEXT" value="foo">
+				<INPUT name="text2" type="text" value="bar">
+				<input name="text3" type="text" VALUE="baz">
+			`;
+			assert.deepEqual(form.toObject(testForm), { text1: 'foo', text2: 'bar', text3: 'baz' });
+		}
+	},
+
+	'to and from'() {
+		testForm.innerHTML = `
+			<input name="text" type="text">
+			<input name="hidden" type="hidden">
+			<input name="password" type="password">
+			<input name="implicit">
+			<input name="empty">
+
+			<input name="cb1" type="checkbox" value="foo">
+			<input name="cb1" type="checkbox" value="bar">
+
+			<input name="r1" type="radio" value="foo">
+			<input name="r1" type="radio" value="bar">
+			<input name="r1" type="radio" value="baz">
+
+			<select name="select">
+				<option value="foo">foo</option>
+				<option value="bar">bar</option>
+				<option value="baz">baz</option>
+				<option value="qux">qux</option>
+			</select>
+
+			<select multiple name="multiselect">
+				<option value="foo">foo</option>
+				<option value="bar">bar</option>
+				<option value="baz">baz</option>
+				<option value="qux">qux</option>
+			</select>
+		`;
+
+		const value = <FormValue> {
+			text: 'text-foo',
+			hidden: 'hidden-foo',
+			password: 'password-foo',
+			implicit: 'implicit-foo',
+			cb1: 'bar',
+			r1: 'foo',
+			select: 'qux',
+			multiselect: [ 'foo', 'baz' ]
+		};
+
+		form.fromObject(testForm, value);
+
+		value['empty'] = '';
+		assert.deepEqual(form.toObject(testForm), value);
 	}
 });
