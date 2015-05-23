@@ -89,16 +89,21 @@ export function contains(parent: Element, node: Node): boolean {
 
 // Tag trees for element creation, used by fromString
 const tagWrap: {[key: string]: any} = {
-	option: ['select'],
-	tbody: ['table'],
-	thead: ['table'],
-	tfoot: ['table'],
-	tr: ['table', 'tbody'],
-	td: ['table', 'tbody', 'tr'],
-	th: ['table', 'thead', 'tr'],
-	caption: ['table'],
-	colgroup: ['table'],
-	col: ['table', 'colgroup']
+	caption: [ 'table' ],
+	col: [ 'table', 'colgroup' ],
+	colgroup: [ 'table' ],
+	optgroup: [ 'select' ],
+	option: [ 'select' ],
+	rp: [ 'ruby' ],
+	rt: [ 'ruby' ],
+	rtc: [ 'ruby' ],
+	source: [ 'audio' ],
+	tbody: [ 'table' ],
+	td: [ 'table', 'tbody', 'tr' ],
+	tfoot: [ 'table' ],
+	th: [ 'table', 'thead', 'tr' ],
+	thead: [ 'table' ],
+	tr: [ 'table', 'tbody' ]
 };
 
 for (const param in tagWrap) {

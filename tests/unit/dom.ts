@@ -320,10 +320,32 @@ registerSuite({
 	},
 
 	fromString: (function () {
-		function createTagTest(tagName: string) {
+		const tags = [
+			'caption',
+			'col',
+			'colgroup',
+			'optgroup',
+			'option',
+			'rp',
+			'rt',
+			'rtc',
+			'ruby',
+			'tbody',
+			'td',
+			'tfoot',
+			'th',
+			'thead',
+			'tr'
+		];
+
+		const selfClosingTags = [
+			'source'
+		];
+
+		function createTagTest(tagName: string, selfClosing?: boolean) {
 			return function () {
 				// Single
-				let html = '<' + tagName + '></' + tagName + '>';
+				let html = '<' + tagName + '>' + (selfClosing ? '' : '</' + tagName + '>');
 				let fragment = dom.fromString(html);
 				assert.strictEqual(fragment.firstChild.nodeName, tagName.toUpperCase());
 
@@ -336,7 +358,7 @@ registerSuite({
 			};
 		}
 
-		return {
+		var tests: any = {
 			'returns document fragment for single node'() {
 				let result = dom.fromString('<div></div>');
 				assert.strictEqual(result.firstChild.nodeName, 'DIV');
@@ -369,20 +391,17 @@ registerSuite({
 					assert.strictEqual(fragment.childNodes[i].nodeName,
 						parent.childNodes[i].nodeName);
 				}
-			},
-
-			'<option> is created successfully and returned unwrapped': createTagTest('option'),
-			'<tbody> is created successfully and returned unwrapped': createTagTest('tbody'),
-			'<thead> is created successfully and returned unwrapped': createTagTest('thead'),
-			'<tfoot> is created successfully and returned unwrapped': createTagTest('tfoot'),
-			'<th> is created successfully and returned unwrapped': createTagTest('th'),
-			'<td> is created successfully and returned unwrapped': createTagTest('td'),
-			'<legend> is created successfully and returned unwrapped': createTagTest('legend'),
-			'<caption> is created successfully and returned unwrapped': createTagTest('caption'),
-			'<colgroup> is created successfully and returned unwrapped': createTagTest('colgroup'),
-			'<col> is created successfully and returned unwrapped': createTagTest('col'),
-			'<li> is created successfully and returned unwrapped': createTagTest('li')
+			}
 		};
+
+		for (let tag of tags) {
+			tests['<' + tag + '> is created successfully and returned unwrapped'] = createTagTest(tag);
+		}
+		for (let tag of selfClosingTags) {
+			tests['<' + tag + '> is created successfully and returned unwrapped'] = createTagTest(tag, true);
+		}
+
+		return tests;
 	})(),
 
 	place: (function () {
