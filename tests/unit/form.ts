@@ -7,31 +7,31 @@ type FormValue = { [ key: string ]: any };
 let testForm: HTMLFormElement;
 
 registerSuite({
-	name: 'dom/form',
+	name: 'form',
 
 	setup() {
 		testForm = document.createElement('form');
 	},
 
 	'.fromObject': {
-		text() {
+		capitalization() {
+			testForm.innerHTML = `
+				<input name="text1" type="TEXT">
+				<INPUT name="text2" type="text">
+			`;
+			form.fromObject(testForm, { text1: 'foo', text2: 'bar' });
+			assert.strictEqual(testForm['text1'].value, 'foo');
+			assert.strictEqual(testForm['text2'].value, 'bar');
+		},
+
+		disabled() {
 			testForm.innerHTML = `
 				<input name="text" type="text">
-				<input name="hidden" type="hidden">
-				<input name="password" type="password">
-				<input name="implicit">
+				<input name="disabled" type="text" disabled>
 			`;
-			const expected = <FormValue> {
-				text: 'foo',
-				hidden: 'bar',
-				password: 'baz',
-				implicit: 'qux'
-			};
-
-			form.fromObject(testForm, expected);
-			for (const name in expected) {
-				assert.strictEqual(testForm[name].value, expected[name]);
-			}
+			form.fromObject(testForm, { text: 'foo', disabled: 'bar' });
+			assert.strictEqual(testForm['text'].value, 'foo');
+			assert.strictEqual(testForm['disabled'].value, '');
 		},
 
 		checkbox() {
@@ -48,6 +48,13 @@ registerSuite({
 			assert.isTrue(testForm['cb1'][1].checked);
 			assert.isTrue(testForm['cb2'].checked);
 			assert.isTrue(testForm['cb3'].checked);
+
+			// Set nothing (should clear all checkboxes)
+			form.fromObject(testForm, {});
+			assert.isFalse(testForm['cb1'][0].checked);
+			assert.isFalse(testForm['cb1'][1].checked);
+			assert.isFalse(testForm['cb2'].checked);
+			assert.isFalse(testForm['cb3'].checked);
 
 			// Set group to single value
 			form.fromObject(testForm, { cb1: 'foo' });
@@ -85,13 +92,10 @@ registerSuite({
 		},
 
 		'select-single': (function () {
-			function runTest() {
-				const options = testForm['select'].options;
-				form.fromObject(testForm, { select: 'bar' });
-				assert.isFalse(options[0].selected);
-				assert.isTrue(options[1].selected);
-				assert.isFalse(options[2].selected);
-				assert.isFalse(options[3].selected);
+			function runTest(object: { [ key: string ]: any }, index: number, value: string) {
+				form.fromObject(testForm, object);
+				assert.strictEqual(testForm['select'].selectedIndex, index);
+				assert.strictEqual(testForm['select'].value, value);
 			}
 
 			return {
@@ -104,7 +108,7 @@ registerSuite({
 							<option value="qux">qux</option>
 						</select>
 					`;
-					runTest();
+					runTest({ select: 'bar' }, 1, 'bar');
 				},
 
 				group() {
@@ -120,7 +124,7 @@ registerSuite({
 							</optgroup>
 						</select>
 					`;
-					runTest();
+					runTest({ select: 'bar' }, 1, 'bar');
 				},
 
 				clear() {
@@ -131,12 +135,33 @@ registerSuite({
 							<option value="baz">baz</option>
 						</select>
 					`;
-					form.fromObject(testForm, {});
-					const options = testForm['select'].options;
-					// Expect that the first option is selected if no other is explicitly selected
-					assert.isTrue(options[0].selected);
-					assert.isFalse(options[1].selected);
-					assert.isFalse(options[2].selected);
+					runTest({}, 0, 'foo');
+				},
+
+				'clear with disabled first option'() {
+					testForm.innerHTML = `
+						<select name="select">
+							<option disabled value="foo">foo</option>
+							<option value="bar">bar</option>
+							<option value="baz">baz</option>
+						</select>
+					`;
+					runTest({}, 1, 'bar');
+				},
+
+				'clear with disabled first option and optgroup'() {
+					testForm.innerHTML = `
+						<select name="select">
+							<optgroup label="first">
+								<option disabled value="foo">foo</option>
+								<option value="bar">bar</option>
+							</optgroup>
+							<optgroup label="second">
+								<option value="baz">baz</option>
+							</optgroup>
+						</select>
+					`;
+					runTest({}, 1, 'bar');
 				}
 			};
 		})(),
@@ -201,46 +226,46 @@ registerSuite({
 					assert.isFalse(options[0].selected);
 					assert.isFalse(options[1].selected);
 				}
-			}
+			};
 		})(),
 
-		disabled() {
+		text() {
 			testForm.innerHTML = `
 				<input name="text" type="text">
-				<input name="disabled" type="text" disabled>
+				<input name="hidden" type="hidden">
+				<input name="password" type="password">
+				<input name="implicit">
 			`;
-			form.fromObject(testForm, { text: 'foo', disabled: 'bar' });
-			assert.strictEqual(testForm['text'].value, 'foo');
-			assert.strictEqual(testForm['disabled'].value, '');
-		},
+			const expected = <FormValue> {
+				text: 'foo',
+				hidden: 'bar',
+				password: 'baz',
+				implicit: 'qux'
+			};
 
-		'capitalization'() {
-			testForm.innerHTML = `
-				<input name="text1" type="TEXT">
-				<INPUT name="text2" type="text">
-			`;
-			form.fromObject(testForm, { text1: 'foo', text2: 'bar' });
-			assert.strictEqual(testForm['text1'].value, 'foo');
-			assert.strictEqual(testForm['text2'].value, 'bar');
+			form.fromObject(testForm, expected);
+			for (const name in expected) {
+				assert.strictEqual(testForm[name].value, expected[name]);
+			}
 		}
 	},
 
 	'.toObject': {
-		text() {
+		capitalization() {
+			testForm.innerHTML = `
+				<input name="text1" type="TEXT" value="foo">
+				<INPUT name="text2" type="text" value="bar">
+				<input name="text3" type="text" VALUE="baz">
+			`;
+			assert.deepEqual(form.toObject(testForm), { text1: 'foo', text2: 'bar', text3: 'baz' });
+		},
+
+		disabled() {
 			testForm.innerHTML = `
 				<input name="text" type="text" value="foo">
-				<input name="hidden" type="hidden" value="bar">
-				<input name="password" type="password" value="baz">
-				<input name="implicit" value="qux">
-				<input name="empty">
+				<input name="disabled" type="text" value="bar" disabled>
 			`;
-			assert.deepEqual(form.toObject(testForm), {
-				text: 'foo',
-				hidden: 'bar',
-				password: 'baz',
-				implicit: 'qux',
-				empty: ''
-			});
+			assert.deepEqual(form.toObject(testForm), { text: 'foo' });
 		},
 
 		checkbox: {
@@ -249,7 +274,7 @@ registerSuite({
 					<input name="cb1" type="checkbox" value="foo">
 					<input name="cb1" type="checkbox" value="bar" checked>
 				`;
-				assert.deepEqual(form.toObject(testForm), { cb1: 'bar' });
+				assert.deepEqual(form.toObject(testForm), { cb1: [ 'bar' ] });
 			},
 
 			'multiple checks'() {
@@ -328,7 +353,7 @@ registerSuite({
 						<option value="qux">qux</option>
 					</select>
 				`;
-				assert.deepEqual(form.toObject(testForm), { select: 'bar' });
+				assert.deepEqual(form.toObject(testForm), { select: [ 'bar' ] });
 			},
 
 			flat() {
@@ -360,21 +385,21 @@ registerSuite({
 			}
 		},
 
-		disabled() {
+		text() {
 			testForm.innerHTML = `
 				<input name="text" type="text" value="foo">
-				<input name="disabled" type="text" value="bar" disabled>
+				<input name="hidden" type="hidden" value="bar">
+				<input name="password" type="password" value="baz">
+				<input name="implicit" value="qux">
+				<input name="empty">
 			`;
-			assert.deepEqual(form.toObject(testForm), { text: 'foo' });
-		},
-
-		'capitalization'() {
-			testForm.innerHTML = `
-				<input name="text1" type="TEXT" value="foo">
-				<INPUT name="text2" type="text" value="bar">
-				<input name="text3" type="text" VALUE="baz">
-			`;
-			assert.deepEqual(form.toObject(testForm), { text1: 'foo', text2: 'bar', text3: 'baz' });
+			assert.deepEqual(form.toObject(testForm), {
+				text: 'foo',
+				hidden: 'bar',
+				password: 'baz',
+				implicit: 'qux',
+				empty: ''
+			});
 		}
 	},
 
@@ -413,7 +438,7 @@ registerSuite({
 			hidden: 'hidden-foo',
 			password: 'password-foo',
 			implicit: 'implicit-foo',
-			cb1: 'bar',
+			cb1: [ 'bar' ],
 			r1: 'foo',
 			select: 'qux',
 			multiselect: [ 'foo', 'baz' ]

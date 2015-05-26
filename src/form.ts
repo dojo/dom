@@ -1,4 +1,4 @@
-const EXCLUDED_TAGS = { 
+const EXCLUDED_TAGS = {
 	'file': true,
 	'submit': true,
 	'image': true,
@@ -9,11 +9,25 @@ const EXCLUDED_TAGS = {
 type FormValue = { [ key: string ]: any };
 
 /**
- * Fills in a DOM form using values from a JavaScript object. Note that fields not specified in the value object will be
- * cleared.
+ * Returns the index of the first enabled option in the select element.
+ * Used for resetting values in single-value select fields.
+ */
+function findFirstEnabledIndex(select: HTMLSelectElement) {
+	const length = select.options.length;
+	for (let i = 0; i < length; i++) {
+		if (!select.options[i].disabled) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+/**
+ * Fills in a DOM form using values from a JavaScript object.
+ * Note that fields not specified in the value object will be cleared.
  *
- * @param form the DOM form to set values in
- * @param object an object containing values for each field in the form
+ * @param form The DOM form to set values in
+ * @param object An object containing values for each field in the form
  *
  * @example
  * let formNode = document.getElementById('aForm');
@@ -67,7 +81,7 @@ export function fromObject(form: HTMLFormElement, object: FormValue): void {
 					}
 				}
 				else {
-					selectElement.selectedIndex = 0;
+					selectElement.selectedIndex = findFirstEnabledIndex(selectElement);
 				}
 				break;
 
@@ -85,24 +99,21 @@ export function fromObject(form: HTMLFormElement, object: FormValue): void {
 /**
  * Gets the value of a form field.
  */
-function getValue(field: HTMLInputElement): string | string[] {
-	const type = field.type;
+function getValue(element: HTMLInputElement): string | string[] {
+	const type = element.type;
 	let value: string | string[];
 
 	if (type === 'radio' || type === 'checkbox') {
-		if (field.checked) {
-			value = field.value;
+		if (element.checked) {
+			value = element.value;
 		}
 	}
-	else if (field.multiple) {
+	else if (element.multiple) {
 		// For fields with the 'multiple' attribute set, gather the values of all descendant <option> elements that are
 		// selected. This code assumes the field is a select or datalist (something with options).
-		const options = field.querySelectorAll('option:checked');
+		const options = element.querySelectorAll('option:checked');
 		const numOptions = options.length;
-		if (numOptions === 1) {
-			value = (<HTMLOptionElement> options[0]).value;
-		}
-		else if (numOptions > 1) {
+		if (numOptions) {
 			const values = <string[]> [];
 			for (let i = 0; i < numOptions; i++) {
 				values.push((<HTMLOptionElement> options[i]).value);
@@ -111,7 +122,7 @@ function getValue(field: HTMLInputElement): string | string[] {
 		}
 	}
 	else {
-		value = field.value;
+		value = element.value;
 	}
 
 	return value;
@@ -120,22 +131,28 @@ function getValue(field: HTMLInputElement): string | string[] {
 /**
  * Stores the value of a form field in a value object.
  */
-function storeFieldValue(object: FormValue, field: HTMLInputElement) {
-	const value = getValue(field);
+function storeFieldValue(object: FormValue, element: HTMLInputElement) {
+	const value = getValue(element);
 
 	// Ignore null or undefined values
 	if (value == null) {
 		return;
 	}
 
-	const name = field.name;
+	const name = element.name;
 	const current = object[name];
 
-	if (typeof current === 'string') {
-		object[name] = [ current, value ];
-	}
-	else if (Array.isArray(current)) {
-		current.push(value);
+	// Determine whether value needs to be an array based on whether the field
+	// can potentially accommodate multiple values.
+	// Note that only checkbox groups need special logic here since its elements are iterated separately;
+	// getValue already returns an array for multi-select elements.
+	if (element.type === 'checkbox' && element.form[element.name].length > 1) {
+		if (name in object) {
+			object[name].push(value);
+		}
+		else {
+			object[name] = [ value ];
+		}
 	}
 	else {
 		object[name] = value;
@@ -143,10 +160,10 @@ function storeFieldValue(object: FormValue, field: HTMLInputElement) {
 }
 
 /**
- * Serializes a form node to a JavaScript object.
+ * Serializes the values of a DOM form into a JavaScript object.
  *
- * @param form the DOM form to get values from
- * @returns an object mapping the name of each form field to its value
+ * @param form The DOM form to get values from
+ * @returns An object mapping the name of each form field to its value(s)
  *
  * @example
  * let formNode = document.getElementById('aForm');
