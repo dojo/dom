@@ -457,6 +457,14 @@ registerSuite({
 			tests['<' + tag + '> is created successfully and returned unwrapped'] = createTagTest(tag, true);
 		}
 
+		tests['no tag specified'] = function () {
+			let text = 'test';
+			let result = dom.fromString(text);
+			assert.strictEqual(result.nodeName, '#document-fragment');
+			assert.strictEqual(result.firstChild.nodeName, '#text');
+			assert.strictEqual(result.firstChild.nodeValue, text);
+		}
+
 		return tests;
 	})(),
 
