@@ -5,7 +5,6 @@ import { Handle } from 'dojo-core/interfaces';
 import delegate from 'src/delegate';
 import * as dom from 'src/dom';
 
-let element: HTMLElement;
 let container = document.createElement('div');
 let handles: (Handle)[] = [];
 
