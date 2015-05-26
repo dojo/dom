@@ -16,6 +16,7 @@
 	],
 	"files": [
 		"./src/addCssRule.ts",
+		"./src/delegate.ts",
 		"./src/dom.ts",
 		"./src/form.ts",
 		"./src/interfaces.d.ts",

@@ -1,11 +1,50 @@
+declare module 'dojo-core/interfaces' {
+	export interface Handle {
+		destroy(): void;
+	}
+
+	export interface EventObject {
+		type: string;
+	}
+
+}
+declare module 'dojo-core/observers/interfaces' {
+	import core = require('dojo-core/interfaces');
+
+	export interface Observer extends core.Handle {
+		observeProperty(...property: string[]): void;
+		removeProperty(...property: string[]): void;
+		nextTurn?: boolean;
+		onlyReportObserved?: boolean;
+	}
+
+	export interface PropertyEvent {
+		target: {};
+		name: string;
+	}
+
+}
+declare module 'dojo-core/object' {
+	/**
+	 * Copies the values of all enumerable own properties of one or more source objects to the target object.
+	 * @return The modified target object
+	 */
+	export function assign(target: any, ...sources: any[]): any;
+	/**
+	 * Determines whether two values are the same value.
+	 * @return true if the values are the same; false otherwise
+	 */
+	export function is(value1: any, value2: any): boolean;
+
+}
 declare module 'dojo-core/global' {
-	 const globalObject: any;
+	const globalObject: any;
 	export default globalObject;
 
 }
 declare module 'dojo-core/has' {
 	export let cache: {
-	    [feature: string]: any;
+		[feature: string]: any;
 	};
 	/**
 	 * Register a new test for a named feature.
@@ -28,17 +67,11 @@ declare module 'dojo-core/has' {
 	export default function has(feature: string): any;
 
 }
-declare module 'dojo-core/interfaces' {
-	export interface Handle {
-		destroy(): void;
-	}
-
-}
 declare module 'dojo-core/queue' {
 	import { Handle } from 'dojo-core/interfaces';
 	export interface QueueItem {
-	    isActive: boolean;
-	    callback: (...args: any[]) => any;
+		isActive: boolean;
+		callback: (...args: any[]) => any;
 	}
 	export let queueTask: (callback: (...args: any[]) => any) => Handle;
 	/**
@@ -49,22 +82,136 @@ declare module 'dojo-core/queue' {
 	export let queueMicroTask: (callback: (...args: any[]) => any) => Handle;
 
 }
-declare module 'dojo-core/nextTick' {
-	import { Handle } from 'dojo-core/interfaces'; let nextTick: (callback: () => void) => Handle;
-	export default nextTick;
+declare module 'dojo-core/Scheduler' {
+	import { Handle } from 'dojo-core/interfaces';
+	import { QueueItem } from 'dojo-core/queue';
+	export interface KwArgs {
+		deferWhileProcessing?: boolean;
+		queueFunction?: (callback: (...args: any[]) => any) => Handle;
+	}
+	export default class Scheduler {
+		protected _boundDispatch: () => void;
+		protected _deferred: QueueItem[];
+		protected _isProcessing: boolean;
+		protected _queue: QueueItem[];
+		protected _task: Handle;
+	    /**
+	     * Determines whether any callbacks registered during should be added to the current batch (`false`)
+	     * or deferred until the next batch (`true`, default).
+	     */
+		deferWhileProcessing: boolean;
+	    /**
+	     * Allows users to specify the function that should be used to schedule callbacks.
+	     * If no function is provided, then `queueTask` will be used.
+	     */
+		queueFunction: (callback: (...args: any[]) => any) => Handle;
+		protected _defer(callback: (...args: any[]) => void): Handle;
+		protected _dispatch(): void;
+		protected _schedule(item: QueueItem): void;
+		constructor(kwArgs?: KwArgs);
+		schedule(callback: (...args: any[]) => void): Handle;
+	}
+
+}
+declare module 'dojo-core/lang' {
+	import { PropertyEvent, Observer } from 'dojo-core/observers/interfaces';
+	import { Handle } from 'dojo-core/interfaces';
+	export function copy(kwArgs: CopyArgs): any;
+	export interface CopyArgs {
+		deep?: boolean;
+		descriptors?: boolean;
+		inherited?: boolean;
+		assignPrototype?: boolean;
+		target?: any;
+		sources: any[];
+	}
+	export function create(prototype: {}, ...mixins: {}[]): {};
+	export function duplicate(source: {}): {};
+	export function getPropertyNames(object: {}): string[];
+	export function getPropertyDescriptor(object: Object, property: string): PropertyDescriptor;
+	export function isIdentical(a: any, b: any): boolean;
+	export function lateBind(instance: {}, method: string, ...suppliedArgs: any[]): (...args: any[]) => any;
+	export function observe(kwArgs: ObserveArgs): Observer;
+	export interface ObserveArgs {
+		listener: (events: PropertyEvent[]) => any;
+		nextTurn?: boolean;
+		onlyReportObserved?: boolean;
+		target: {};
+	}
+	export function partial(targetFunction: (...args: any[]) => any, ...suppliedArgs: any[]): (...args: any[]) => any;
+	export function createHandle(destructor: () => void): Handle;
+	export function createCompositeHandle(...handles: Handle[]): Handle;
+
+}
+declare module 'dojo-core/aspect' {
+	import { Handle } from 'dojo-core/interfaces';
+	/**
+	 * Attaches "after" advice to be executed after the original method.
+	 * The advising function will receive the original method's return value and arguments object.
+	 * The value it returns will be returned from the method when it is called (even if the return value is undefined).
+	 * @param target Object whose method will be aspected
+	 * @param methodName Name of method to aspect
+	 * @param advice Advising function which will receive the original method's return value and arguments object
+	 * @return A handle which will remove the aspect when destroy is called
+	 */
+	export function after(target: any, methodName: string, advice: (originalReturn: any, originalArgs: IArguments) => any): Handle;
+	/**
+	 * Attaches "around" advice around the original method.
+	 * @param target Object whose method will be aspected
+	 * @param methodName Name of method to aspect
+	 * @param advice Advising function which will receive the original function
+	 * @return A handle which will remove the aspect when destroy is called
+	 */
+	export function around(target: any, methodName: string, advice: (previous: Function) => Function): Handle;
+	/**
+	 * Attaches "before" advice to be executed before the original method.
+	 * @param target Object whose method will be aspected
+	 * @param methodName Name of method to aspect
+	 * @param advice Advising function which will receive the same arguments as the original, and may return new arguments
+	 * @return A handle which will remove the aspect when destroy is called
+	 */
+	export function before(target: any, methodName: string, advice: (...originalArgs: any[]) => any[]): Handle;
+	/**
+	 * Attaches advice to be executed after the original method.
+	 * The advising function will receive the same arguments as the original method.
+	 * The value it returns will be returned from the method when it is called *unless* its return value is undefined.
+	 * @param target Object whose method will be aspected
+	 * @param methodName Name of method to aspect
+	 * @param advice Advising function which will receive the same arguments as the original method
+	 * @return A handle which will remove the aspect when destroy is called
+	 */
+	export function on(target: any, methodName: string, advice: (...originalArgs: any[]) => any): Handle;
+
+}
+declare module 'dojo-core/Evented' {
+	import { Handle, EventObject } from 'dojo-core/interfaces';
+	export default class Evented {
+	    /**
+	     * Emits an event, firing listeners registered for it.
+	     * @param event The event object to emit
+	     */
+		emit(data: EventObject): void;
+	    /**
+	     * Listens for an event, calling the listener whenever the event fires.
+	     * @param type Event type to listen for
+	     * @param listener Callback to handle the event when it fires
+	     * @return A handle which will remove the listener when destroy is called
+	     */
+		on(type: string, listener: (event: EventObject) => void): Handle;
+	}
 
 }
 declare module 'dojo-core/Promise' {
 	/**
-	 * Return true if a given value has a `then` method.
-	 */
-	export function isThenable(value: any): boolean;
-	/**
 	 * Executor is the interface for functions used to initialize a Promise.
 	 */
 	export interface Executor<T> {
-	    (resolve: (value?: T | Thenable<T>) => void, reject: (reason?: any) => void): void;
+		(resolve: (value?: T | Thenable<T>) => void, reject: (reason?: any) => void): void;
 	}
+	/**
+	 * Returns true if a given value has a `then` method.
+	 */
+	export function isThenable(value: any): boolean;
 	/**
 	 * PromiseShim is an implementation of the ES2015 Promise specification.
 	 *
@@ -76,11 +223,11 @@ declare module 'dojo-core/Promise' {
 	 * @borrows Promise#then as PromiseShim#then
 	 */
 	export class PromiseShim<T> implements Thenable<T> {
-	    static all<T>(items: (T | Thenable<T>)[]): PromiseShim<T[]>;
-	    static race<T>(items: (T | Thenable<T>)[]): PromiseShim<T>;
-	    static reject<T>(reason?: Error): PromiseShim<T>;
-	    static resolve(): PromiseShim<void>;
-	    static resolve<T>(value: (T | Thenable<T>)): PromiseShim<T>;
+		static all<T>(items: (T | Thenable<T>)[]): PromiseShim<T[]>;
+		static race<T>(items: (T | Thenable<T>)[]): PromiseShim<T>;
+		static reject<T>(reason?: Error): PromiseShim<T>;
+		static resolve(): PromiseShim<void>;
+		static resolve<T>(value: (T | Thenable<T>)): PromiseShim<T>;
 	    /**
 	     * Creates a new PromiseShim.
 	     *
@@ -93,18 +240,18 @@ declare module 'dojo-core/Promise' {
 	     * The executor must call either the passed `resolve` function when the asynchronous operation has completed
 	     * successfully, or the `reject` function when the operation fails.
 	     */
-	    constructor(executor: Executor<T>);
+		constructor(executor: Executor<T>);
 	    /**
 	     * The current state of this promise.
 	     */
-	    private state;
+		private state;
 	    /**
 	     * The resolved value for this promise.
 	     *
 	     * @type {T|Error}
 	     */
-	    private resolvedValue;
-	    then: <U>(onFulfilled?: (value?: T) => (U | Thenable<U>), onRejected?: (reason?: Error) => (U | Thenable<U>)) => PromiseShim<U>;
+		private resolvedValue;
+		then: <U>(onFulfilled?: (value?: T) => (U | Thenable<U>), onRejected?: (reason?: Error) => (U | Thenable<U>)) => PromiseShim<U>;
 	}
 	/**
 	 * PlatformPromise is a very thin wrapper around either a native promise implementation or PromiseShim.
@@ -113,7 +260,7 @@ declare module 'dojo-core/Promise' {
 	    /**
 	     * Points to the promise constructor this platform should use.
 	     */
-	    static PromiseConstructor: any;
+		static PromiseConstructor: any;
 	    /**
 	     * Converts an iterable object containing promises into a single promise that resolves to a new iterable object
 	     * containing the fulfilled values of all the promises in the iterable, in the same order as the Promises in the
@@ -134,7 +281,7 @@ declare module 'dojo-core/Promise' {
 	     *     value.bar === 'bar'; // true
 	     * });
 	     */
-	    static all<T>(items: (T | Thenable<T>)[]): Promise<T[]>;
+		static all<T>(items: (T | Thenable<T>)[]): Promise<T[]>;
 	    /**
 	     * Converts an iterable object containing promises into a single promise that resolves or rejects as soon as one of
 	     * the promises in the iterable resolves or rejects, with the value of the resolved or rejected promise. Values in
@@ -153,21 +300,21 @@ declare module 'dojo-core/Promise' {
 	     *     value === 'foo'; // true
 	     * });
 	     */
-	    static race<T>(items: (T | Thenable<T>)[]): Promise<T>;
+		static race<T>(items: (T | Thenable<T>)[]): Promise<T>;
 	    /**
 	     * Creates a new promise that is rejected with the given error.
 	     */
-	    static reject<T>(reason: Error): Promise<any>;
+		static reject<T>(reason: Error): Promise<any>;
 	    /**
 	     * Creates a new promise that is resolved with the given value. If the passed value is already a PromiseShim, it
 	     * will be returned as-is.
 	     */
-	    static resolve(): Promise<void>;
-	    static resolve<T>(value: (T | Thenable<T>)): Promise<T>;
+		static resolve(): Promise<void>;
+		static resolve<T>(value: (T | Thenable<T>)): Promise<T>;
 	    /**
-	     * Copy another Promise, taking on its inner state.
+	     * Copies another Promise, taking on its inner state.
 	     */
-	    protected static copy<U>(other: Promise<U>): Promise<U>;
+		protected static copy<U>(other: Promise<U>): Promise<U>;
 	    /**
 	     * Creates a new Promise.
 	     *
@@ -180,45 +327,45 @@ declare module 'dojo-core/Promise' {
 	     * The executor must call either the passed `resolve` function when the asynchronous operation has completed
 	     * successfully, or the `reject` function when the operation fails.
 	     */
-	    constructor(executor: Executor<T>);
+		constructor(executor: Executor<T>);
 	    /**
 	     * An object wrapped by this class that actually implements the Promise API.
 	     */
-	    private promise;
+		private promise;
 	    /**
 	     * The internal state of this promise. This may be updated directly by subclasses.
 	     */
-	    protected _state: State;
+		protected _state: State;
 	    /**
 	     * Adds a callback to the promise to be invoked when the asynchronous operation throws an error.
 	     */
-	    catch<U>(onRejected: (reason?: Error) => (U | Thenable<U>)): Promise<U>;
+		catch<U>(onRejected: (reason?: Error) => (U | Thenable<U>)): Promise<U>;
 	    /**
 	     * Allows for cleanup actions to be performed after resolution of a Promise.
 	     */
-	    finally(callback: () => void | Thenable<any>): Promise<T>;
+		finally(callback: () => void | Thenable<any>): Promise<T>;
 	    /**
 	     * The current Promise state.
 	     */
-	    state: State;
+		state: State;
 	    /**
 	     * Adds a callback to the promise to be invoked when the asynchronous operation completes successfully.
 	     */
-	    then<U>(onFulfilled?: (value?: T) => (U | Thenable<U>), onRejected?: (reason?: Error) => (U | Thenable<U>)): Promise<U>;
+		then<U>(onFulfilled?: (value?: T) => (U | Thenable<U>), onRejected?: (reason?: Error) => (U | Thenable<U>)): Promise<U>;
 	}
 	/**
 	 * The State enum represents the possible states of a promise.
 	 */
 	export enum State {
-	    Fulfilled = 0,
-	    Pending = 1,
-	    Rejected = 2,
+		Fulfilled = 0,
+		Pending = 1,
+		Rejected = 2,
 	}
 	/**
 	 * Thenable represents any object with a callable `then` property.
 	 */
 	export interface Thenable<T> {
-	    then<U>(onFulfilled?: (value?: T) => U | Thenable<U>, onRejected?: (error?: any) => U | Thenable<U>): Thenable<U>;
+		then<U>(onFulfilled?: (value?: T) => U | Thenable<U>, onRejected?: (error?: any) => U | Thenable<U>): Thenable<U>;
 	}
 
 }
@@ -228,11 +375,11 @@ declare module 'dojo-core/decorators' {
 }
 declare module 'dojo-core/WeakMap' {
 	export default class WeakMap<K, V> {
-	    constructor(iterable?: any);
-	    delete(key: K): boolean;
-	    get(key: K): V;
-	    has(key: K): boolean;
-	    set(key: K, value?: V): WeakMap<K, V>;
+		constructor(iterable?: any);
+		delete(key: K): boolean;
+		get(key: K): V;
+		has(key: K): boolean;
+		set(key: K, value?: V): WeakMap<K, V>;
 	}
 
 }
@@ -275,14 +422,14 @@ declare module 'dojo-core/number' {
 }
 declare module 'dojo-core/array' {
 	export interface ArrayLike<T> {
-	    length: number;
-	    [n: number]: T;
+		length: number;
+		[n: number]: T;
 	}
 	export interface MapCallback<T> {
-	    (element: T, index: number): T;
+		(element: T, index: number): T;
 	}
 	export interface FindCallback<T> {
-	    (element: T, index: number, array: ArrayLike<T>): boolean;
+		(element: T, index: number, array: ArrayLike<T>): boolean;
 	}
 	export function from(arrayLike: string, mapFunction?: MapCallback<string>, thisArg?: {}): ArrayLike<string>;
 	export function from<T>(arrayLike: ArrayLike<T>, mapFunction?: MapCallback<T>, thisArg?: {}): ArrayLike<T>;
@@ -335,34 +482,34 @@ declare module 'dojo-core/async/Task' {
 	 * Task is an extension of Promise that supports cancelation.
 	 */
 	export default class Task<T> extends Promise<T> {
-	    protected static copy<U>(other: Promise<U>): Task<U>;
-	    constructor(executor: Executor<T>, canceler?: () => void);
+		protected static copy<U>(other: Promise<U>): Task<U>;
+		constructor(executor: Executor<T>, canceler?: () => void);
 	    /**
 	     * A cancelation handler that will be called if this task is canceled.
 	     */
-	    private canceler;
+		private canceler;
 	    /**
 	     * Children of this Task (i.e., Tasks that were created from this Task with `then` or `catch`).
 	     */
-	    private children;
+		private children;
 	    /**
 	     * The finally callback for this Task (if it was created by a call to `finally`).
 	     */
-	    private _finally;
+		private _finally;
 	    /**
-	     * Propogates cancelation down through a Task tree. The Task's state is immediately set to canceled. If a Thenable
+	     * Propagates cancelation down through a Task tree. The Task's state is immediately set to canceled. If a Thenable
 	     * finally task was passed in, it is resolved before calling this Task's finally callback; otherwise, this Task's
 	     * finally callback is immediately executed. `_cancel` is called for each child Task, passing in the value returned
 	     * by this Task's finally callback or a Promise chain that will eventually resolve to that value.
 	     */
-	    private _cancel(finallyTask?);
+		private _cancel(finallyTask?);
 	    /**
-	     * Immediately cancel this task if it has not already resolved. This Task and any descendants are synchronously set
+	     * Immediately cancels this task if it has not already resolved. This Task and any descendants are synchronously set
 	     * to the Canceled state and any `finally` added downstream from the canceled Task are invoked.
 	     */
-	    cancel(): void;
-	    finally(callback: () => void | Thenable<any>): Task<T>;
-	    then<U>(onFulfilled?: (value: T) => U | Thenable<U>, onRejected?: (error: Error) => U | Thenable<U>): Task<U>;
+		cancel(): void;
+		finally(callback: () => void | Thenable<any>): Task<T>;
+		then<U>(onFulfilled?: (value: T) => U | Thenable<U>, onRejected?: (error: Error) => U | Thenable<U>): Task<U>;
 	}
 
 }
@@ -417,10 +564,10 @@ declare module 'dojo-core/async/iteration' {
 	export interface Filterer<T> extends Mapper<T, boolean> {
 	}
 	export interface Mapper<T, U> {
-	    (value: T, index: number, array: T[]): (U | Thenable<U>);
+		(value: T, index: number, array: T[]): (U | Thenable<U>);
 	}
 	export interface Reducer<T, U> {
-	    (previousValue: U, currentValue: T, index: number, array: T[]): (U | Thenable<U>);
+		(previousValue: U, currentValue: T, index: number, array: T[]): (U | Thenable<U>);
 	}
 
 }
@@ -434,7 +581,7 @@ declare module 'dojo-core/async/timing' {
 	 */
 	export function delay<T>(milliseconds: number): Identity<T>;
 	export interface Identity<T> {
-	    (value: T): Promise<T>;
+		(value: T): Promise<T>;
 	}
 	/**
 	 * Reject a promise chain if a result hasn't been found before the timeout
@@ -453,64 +600,8 @@ declare module 'dojo-core/async/timing' {
 	     * @param milliseconds the number of milliseconds to wait before triggering a rejection
 	     * @param reason the reason for the rejection
 	     */
-	    constructor(milliseconds: number, reason?: Error);
+		constructor(milliseconds: number, reason?: Error);
 	}
-
-}
-declare module 'dojo-core/observers/interfaces' {
-	import core = require('dojo-core/interfaces');
-
-	export interface Observer extends core.Handle {
-		observeProperty(...property: string[]): void;
-		removeProperty(...property: string[]): void;
-	    nextTurn?: boolean;
-	    onlyReportObserved?: boolean;
-	}
-
-	export interface PropertyEvent {
-		target: {};
-		name: string;
-	}
-
-}
-declare module 'dojo-core/object' {
-	/**
-	 * Copies the values of all enumerable own properties of one or more source objects to the target object.
-	 * @return The modified target object
-	 */
-	export function assign(target: any, ...sources: any[]): any;
-	/**
-	 * Determines whether two values are the same value.
-	 * @return true if the values are the same; false otherwise
-	 */
-	export function is(value1: any, value2: any): boolean;
-
-}
-declare module 'dojo-core/lang' {
-	import { PropertyEvent, Observer } from 'dojo-core/observers/interfaces';
-	export function copy(kwArgs: CopyArgs): any;
-	export interface CopyArgs {
-	    deep?: boolean;
-	    descriptors?: boolean;
-	    inherited?: boolean;
-	    assignPrototype?: boolean;
-	    target?: any;
-	    sources: any[];
-	}
-	export function create(prototype: {}, ...mixins: {}[]): {};
-	export function duplicate(source: {}): {};
-	export function getPropertyNames(object: {}): string[];
-	export function getPropertyDescriptor(object: Object, property: string): PropertyDescriptor;
-	export function isIdentical(a: any, b: any): boolean;
-	export function lateBind(instance: {}, method: string, ...suppliedArgs: any[]): (...args: any[]) => any;
-	export function observe(kwArgs: ObserveArgs): Observer;
-	export interface ObserveArgs {
-	    listener: (events: PropertyEvent[]) => any;
-	    nextTurn?: boolean;
-	    onlyReportObserved?: boolean;
-	    target: {};
-	}
-	export function partial(targetFunction: (...args: any[]) => any, ...suppliedArgs: any[]): (...args: any[]) => any;
 
 }
 declare module 'dojo-core/math' {
@@ -536,6 +627,21 @@ declare module 'dojo-core/math' {
 	 */
 	export function atanh(n: number): number;
 	/**
+	 * Returns the cube root of a number.
+	 *
+	 * @param n The number to use in calculation
+	 * @return The result
+	 */
+	export function cbrt(n: number): number;
+	/**
+	 * Returns the number of leading zero bits in the 32-bit
+	 * binary representation of a number.
+	 *
+	 * @param n The number to use in calculation
+	 * @return The result
+	 */
+	export function clz32(n: number): number;
+	/**
 	 * Returns the hyperbolic cosine of a number.
 	 *
 	 * @param n The number to use in calculation
@@ -543,32 +649,33 @@ declare module 'dojo-core/math' {
 	 */
 	export function cosh(n: number): number;
 	/**
-	 * Returns the square root of the sum of squares of its arguments.
-	 *
-	 * @return The result
-	 */
-	export function hypot(...args: number[]): number;
-	/**
-	 * Returns the hyperbolic sine of a number.
-	 *
-	 * @param n The number to use in calculation
-	 * @return The result
-	 */
-	export function sinh(n: number): number;
-	/**
-	 * Returns the hyperbolic tangent of a number.
-	 *
-	 * @param n The number to use in calculation
-	 * @return The result
-	 */
-	export function tanh(n: number): number;
-	/**
 	 * Returns e raised to the specified power minus one.
 	 *
 	 * @param n The number to use in calculation
 	 * @return The result
 	 */
 	export function expm1(n: number): number;
+	/**
+	 * Returns the nearest single-precision float representation of a number.
+	 *
+	 * @param n The number to use in calculation
+	 * @return The result
+	 */
+	export const fround: (n: number) => number;
+	/**
+	 * Returns the square root of the sum of squares of its arguments.
+	 *
+	 * @return The result
+	 */
+	export function hypot(...args: number[]): number;
+	/**
+	 * Returns the result of the 32-bit multiplication of the two parameters.
+	 *
+	 * @param n The number to use in calculation
+	 * @param m The number to use in calculation
+	 * @return The result
+	 */
+	export function imul(n: number, m: number): number;
 	/**
 	 * Returns the base 2 logarithm of a number.
 	 *
@@ -591,42 +698,26 @@ declare module 'dojo-core/math' {
 	 */
 	export function log1p(n: number): number;
 	/**
-	 * Returns the cube root of a number.
-	 *
-	 * @param n The number to use in calculation
-	 * @return The result
-	 */
-	export function cbrt(n: number): number;
-	/**
-	 * Returns the number of leading zero bits in the 32-bit
-	 * binary representation of a number.
-	 *
-	 * @param n The number to use in calculation
-	 * @return The result
-	 */
-	export function clz32(n: number): number;
-	/**
-	 * Returns the nearest single-precision float representation of a number.
-	 *
-	 * @param n The number to use in calculation
-	 * @return The result
-	 */
-	export const fround: (n: number) => number;
-	/**
-	 * Returns the result of the 32-bit multiplication of the two parameters.
-	 *
-	 * @param n The number to use in calculation
-	 * @param m The number to use in calculation
-	 * @return The result
-	 */
-	export function imul(n: number, m: number): number;
-	/**
 	 * Returns the sign of a number, indicating whether the number is positive.
 	 *
 	 * @param n The number to use in calculation
-	 * @return 1 if the number is positive, -1 if the number is negative, or 0 if the number is 0 or NaN
+	 * @return 1 if the number is positive, -1 if the number is negative, or 0 if the number is 0
 	 */
 	export function sign(n: number): number;
+	/**
+	 * Returns the hyperbolic sine of a number.
+	 *
+	 * @param n The number to use in calculation
+	 * @return The result
+	 */
+	export function sinh(n: number): number;
+	/**
+	 * Returns the hyperbolic tangent of a number.
+	 *
+	 * @param n The number to use in calculation
+	 * @return The result
+	 */
+	export function tanh(n: number): number;
 	/**
 	 * Returns the integral part of a number by removing any fractional digits.
 	 *
@@ -636,64 +727,110 @@ declare module 'dojo-core/math' {
 	export function trunc(n: number): number;
 
 }
+declare module 'dojo-core/on' {
+	import { Handle, EventObject } from 'dojo-core/interfaces';
+	import Evented from 'dojo-core/Evented';
+	export interface EventCallback {
+		(event: EventObject): void;
+	}
+	export interface EventEmitter {
+		on(event: string, listener: EventCallback): EventEmitter;
+		removeListener(event: string, listener: EventCallback): EventEmitter;
+	}
+	export interface EventTarget {
+		accessKey?: string;
+		addEventListener(event: string, listener: EventCallback, capture?: boolean): void;
+		removeEventListener(event: string, listener: EventCallback, capture?: boolean): void;
+	}
+	export interface ExtensionEvent {
+		(target: any, listener: EventCallback, capture?: boolean): Handle;
+	}
+	/**
+	 * Provides a normalized mechanism for dispatching events for event emitters, Evented objects, or DOM nodes.
+	 * @param target The target to emit the event from
+	 * @param event The event object to emit
+	 * @return Boolean indicating Whether the event was canceled (this will always be false for event emitters)
+	 */
+	export function emit(target: EventTarget, event: EventObject): boolean;
+	export function emit(target: EventEmitter, event: EventObject): boolean;
+	export function emit(target: Evented, event: EventObject): boolean;
+	/**
+	 * Provides a normalized mechanism for listening to events from event emitters, Evented objects, or DOM nodes.
+	 * @param target Target to listen for event on
+	 * @param type Event type(s) to listen for; may be strings or extension events
+	 * @param listener Callback to handle the event when it fires
+	 * @param capture Whether the listener should be registered in the capture phase (DOM events only)
+	 * @return A handle which will remove the listener when destroy is called
+	 */
+	export default function on(target: EventTarget, type: string, listener: EventCallback, capture?: boolean): Handle;
+	export default function on(target: EventTarget, type: ExtensionEvent, listener: EventCallback, capture?: boolean): Handle;
+	export default function on(target: EventTarget, type: (string | ExtensionEvent)[], listener: EventCallback, capture?: boolean): Handle;
+	export default function on(target: EventEmitter, type: string, listener: EventCallback): Handle;
+	export default function on(target: EventEmitter, type: ExtensionEvent, listener: EventCallback): Handle;
+	export default function on(target: EventEmitter, type: (string | ExtensionEvent)[], listener: EventCallback): Handle;
+	export default function on(target: Evented, type: string, listener: EventCallback): Handle;
+	export default function on(target: Evented, type: ExtensionEvent, listener: EventCallback): Handle;
+	export default function on(target: Evented, type: (string | ExtensionEvent)[], listener: EventCallback): Handle;
+
+}
 declare module 'dojo-core/streams/ReadableStreamReader' {
 	import Promise from 'dojo-core/Promise';
 	import ReadableStream, { State } from 'dojo-core/streams/ReadableStream';
 	export interface ReadRequest<T> {
-	    promise: Promise<ReadResult<T>>;
-	    resolve: (value: ReadResult<T>) => void;
-	    reject: (reason: any) => void;
+		promise: Promise<ReadResult<T>>;
+		resolve: (value: ReadResult<T>) => void;
+		reject: (reason: any) => void;
 	}
 	export interface ReadResult<T> {
-	    value: T;
-	    done: boolean;
+		value: T;
+		done: boolean;
 	}
 	export function isReadableStreamReader<T>(readableStreamReader: ReadableStreamReader<T>): boolean;
 	export default class ReadableStreamReader<T> {
-	    closed: Promise<void>;
-	    private _closedPromise;
-	    private _ownerReadableStream;
-	    private _storedError;
-	    private _readRequests;
-	    private _resolveClosedPromise;
-	    private _rejectClosedPromise;
-	    state: State;
-	    constructor(stream: ReadableStream<T>);
-	    cancel(reason: string): Promise<void>;
+		closed: Promise<void>;
+		private _closedPromise;
+		private _ownerReadableStream;
+		private _storedError;
+		private _readRequests;
+		private _resolveClosedPromise;
+		private _rejectClosedPromise;
+		state: State;
+		constructor(stream: ReadableStream<T>);
+		cancel(reason: string): Promise<void>;
 	    /**
 	     * This method also incorporates the readFromReadableStreamReader from 3.5.12.
 	     * @alias ReadFromReadableStreamReader
 	     * @returns {Promise<ReadResult<T>>}
 	     */
-	    read(): Promise<ReadResult<T>>;
+		read(): Promise<ReadResult<T>>;
 	    /**
 	     * release a reader's lock on the corresponding stream.
 	     * 3.4.4.4. releaseLock()
 	     */
-	    releaseLock(): void;
+		releaseLock(): void;
 	    /**
 	     * 3.5.13. ReleaseReadableStreamReader ( reader )
 	     * alias ReleaseReadableStreamReader
 	     */
-	    release(): void;
+		release(): void;
 	    /**
 	     * Resolves a pending read request, if any, with the provided chunk.
 	     * @param chunk
 	     * @return boolean True if a read request was resolved.
 	     */
-	    resolveReadRequest(chunk: T): boolean;
+		resolveReadRequest(chunk: T): boolean;
 	}
 
 }
 declare module 'dojo-core/streams/SizeQueue' {
 	export default class SizeQueue<T> {
-	    totalSize: number;
-	    length: number;
-	    private _queue;
-	    empty(): void;
-	    enqueue(value: T, size: number): void;
-	    dequeue(): T;
-	    peek(): T;
+		totalSize: number;
+		length: number;
+		private _queue;
+		empty(): void;
+		enqueue(value: T, size: number): void;
+		dequeue(): T;
+		peek(): T;
 	}
 
 }
@@ -702,15 +839,15 @@ declare module 'dojo-core/streams/TransformStream' {
 	import ReadableStream from 'dojo-core/streams/ReadableStream';
 	import WritableStream from 'dojo-core/streams/WritableStream';
 	export interface Transform<R, W> {
-	    transform(chunk: W, enqueueInReadable: (chunk: R) => void, transformDone: () => void): void;
-	    flush(enqueue: Function, close: Function): void;
-	    writableStrategy: Strategy<W>;
-	    readableStrategy: Strategy<R>;
+		transform(chunk: W, enqueueInReadable: (chunk: R) => void, transformDone: () => void): void;
+		flush(enqueue: Function, close: Function): void;
+		writableStrategy: Strategy<W>;
+		readableStrategy: Strategy<R>;
 	}
 	export default class TransformStream<R, W> {
-	    readable: ReadableStream<R>;
-	    writable: WritableStream<W>;
-	    constructor(transformer: Transform<R, W>);
+		readable: ReadableStream<R>;
+		writable: WritableStream<W>;
+		constructor(transformer: Transform<R, W>);
 	}
 
 }
@@ -749,15 +886,15 @@ declare module 'dojo-core/streams/ReadableStream' {
 	    /**
 	     * Prevents the writable stream from erroring if the readable stream encounters an error.
 	     */
-	    preventAbort?: boolean;
+		preventAbort?: boolean;
 	    /**
 	     *  Prevents the readable stream from erroring if the writable stream encounters an error.
 	     */
-	    preventCancel?: boolean;
+		preventCancel?: boolean;
 	    /**
 	     * Prevents the writable stream from closing when the pipe operation completes.
 	     */
-	    preventClose?: boolean;
+		preventClose?: boolean;
 	}
 	export interface Source<T> {
 	    /**
@@ -767,7 +904,7 @@ declare module 'dojo-core/streams/ReadableStream' {
 	     * @returns A promise that resolves when the source's start operation has finished.  If the promise rejects,
 	     * 		the stream will be errored.
 	     */
-	    start(controller: ReadableStreamController<T>): Promise<void>;
+		start(controller: ReadableStreamController<T>): Promise<void>;
 	    /**
 	     * Requests that source enqueue chunks.  Use the controller to close the stream when no more chunks can
 	     * be provided.
@@ -775,22 +912,22 @@ declare module 'dojo-core/streams/ReadableStream' {
 	     * @returns A promise that resolves when the source's pull operation has finished.  If the promise rejects,
 	     * 		the stream will be errored.
 	     */
-	    pull(controller: ReadableStreamController<T>): Promise<void>;
+		pull(controller: ReadableStreamController<T>): Promise<void>;
 	    /**
 	     * Indicates the stream is prematurely closing and allows the source to do any necessary clean up.
 	     * @param reason The reason why the stream is closing.
 	     * @returns A promise that resolves when the source's pull operation has finished.  If the promise rejects,
 	     * 		the stream will be errored.
 	     */
-	    cancel(reason?: any): Promise<void>;
+		cancel(reason?: any): Promise<void>;
 	}
 	/**
 	 * ReadableStream's possible states
 	 */
 	export enum State {
-	    Readable = 0,
-	    Closed = 1,
-	    Errored = 2,
+		Readable = 0,
+		Closed = 1,
+		Errored = 2,
 	}
 	/**
 	 * Implementation of a readable stream.
@@ -799,83 +936,83 @@ declare module 'dojo-core/streams/ReadableStream' {
 	    /**
 	     * @alias ShouldReadableStreamPull
 	     */
-	    protected _allowPull: boolean;
+		protected _allowPull: boolean;
 	    /**
 	     * 3.5.7. GetReadableStreamDesiredSize ( stream )
 	     * @returns {number}
 	     */
-	    desiredSize: number;
-	    hasSource: boolean;
+		desiredSize: number;
+		hasSource: boolean;
 	    /**
 	     * @alias IsReadableStreamLocked
 	     */
-	    locked: boolean;
-	    readable: boolean;
-	    started: Promise<void>;
-	    queueSize: number;
-	    protected _pullingPromise: Promise<void>;
-	    protected _started: boolean;
-	    protected _startedPromise: Promise<void>;
-	    protected _strategy: Strategy<T>;
-	    protected _underlyingSource: Source<T>;
-	    closeRequested: boolean;
-	    controller: ReadableStreamController<T>;
-	    pullScheduled: boolean;
-	    queue: SizeQueue<T>;
-	    reader: ReadableStreamReader<T>;
-	    state: State;
-	    storedError: Error;
+		locked: boolean;
+		readable: boolean;
+		started: Promise<void>;
+		queueSize: number;
+		protected _pullingPromise: Promise<void>;
+		protected _started: boolean;
+		protected _startedPromise: Promise<void>;
+		protected _strategy: Strategy<T>;
+		protected _underlyingSource: Source<T>;
+		closeRequested: boolean;
+		controller: ReadableStreamController<T>;
+		pullScheduled: boolean;
+		queue: SizeQueue<T>;
+		reader: ReadableStreamReader<T>;
+		state: State;
+		storedError: Error;
 	    /**
 	     * @constructor
 	     */
-	    constructor(underlyingSource: Source<T>, strategy?: Strategy<T>);
-	    protected _cancel(reason?: any): Promise<void>;
+		constructor(underlyingSource: Source<T>, strategy?: Strategy<T>);
+		protected _cancel(reason?: any): Promise<void>;
 	    /**
 	     * @alias shouldReadableStreamApplyBackPressure
 	     */
-	    protected _shouldApplyBackPressure(): boolean;
+		protected _shouldApplyBackPressure(): boolean;
 	    /**
 	     *
 	     * @param reason
 	     * @returns {null}
 	     */
-	    cancel(reason?: any): Promise<void>;
+		cancel(reason?: any): Promise<void>;
 	    /**
 	     * Closes the stream without regard to the status of the queue.  Use {@link requestClose} to close the
 	     * stream and allow the queue to flush.
 	     *
 	     * 3.5.4. FinishClosingReadableStream ( stream )
 	     */
-	    close(): void;
+		close(): void;
 	    /**
 	     * @alias EnqueueInReadableStream
 	     */
-	    enqueue(chunk: T): void;
-	    error(error: Error): void;
+		enqueue(chunk: T): void;
+		error(error: Error): void;
 	    /**
 	     * create a new ReadableStreamReader and lock the stream to the new reader
 	     * @alias AcquireREadableStreamReader
 	     */
-	    getReader(): ReadableStreamReader<T>;
-	    pipeThrough(transformStream: TransformStream<T, any>, options?: PipeOptions): ReadableStream<T>;
-	    pipeTo(dest: WritableStream<T>, options?: PipeOptions): Promise<void>;
+		getReader(): ReadableStreamReader<T>;
+		pipeThrough(transformStream: TransformStream<T, any>, options?: PipeOptions): ReadableStream<T>;
+		pipeTo(dest: WritableStream<T>, options?: PipeOptions): Promise<void>;
 	    /**
 	     * @alias RequestReadableStreamPull
 	     */
-	    pull(): void;
+		pull(): void;
 	    /**
 	     * Requests the stream be closed.  This method allows the queue to be emptied before the stream closes.
 	     *
 	     * 3.5.3. CloseReadableStream ( stream )
 	     * @alias CloseReadableStream
 	     */
-	    requestClose(): void;
+		requestClose(): void;
 	    /**
 	     * Tee a readable stream, returning a two-element array containing
 	     * the two resulting ReadableStream instances
 	     * @alias TeeReadableStream
 	     */
-	    tee(): [ReadableStream<T>, ReadableStream<T>];
+		tee(): [ReadableStream<T>, ReadableStream<T>];
 	}
 
 }
@@ -886,25 +1023,25 @@ declare module 'dojo-core/streams/ReadableStreamController' {
 	 */
 	export function isReadableStreamController(x: any): boolean;
 	export default class ReadableStreamController<T> {
-	    private _controlledReadableStream;
+		private _controlledReadableStream;
 	    /**
 	     * 3.3.4.1. get desiredSize
 	     * @returns {number}
 	     */
-	    desiredSize: number;
-	    constructor(stream: ReadableStream<T>);
+		desiredSize: number;
+		constructor(stream: ReadableStream<T>);
 	    /**
 	     *
 	     */
-	    close(): void;
+		close(): void;
 	    /**
 	     *
 	     */
-	    enqueue(chunk: T): void;
+		enqueue(chunk: T): void;
 	    /**
 	     *
 	     */
-	    error(e: Error): void;
+		error(e: Error): void;
 	}
 
 }
@@ -929,20 +1066,20 @@ declare module 'dojo-core/streams/WritableStream' {
 	import Promise from 'dojo-core/Promise';
 	import SizeQueue from 'dojo-core/streams/SizeQueue';
 	export interface Record<T> {
-	    close?: boolean;
-	    chunk?: T;
-	    reject?: (error: Error) => void;
-	    resolve?: () => void;
+		close?: boolean;
+		chunk?: T;
+		reject?: (error: Error) => void;
+		resolve?: () => void;
 	}
 	/**
 	 * WritableStream's possible states
 	 */
 	export enum State {
-	    Closed = 0,
-	    Closing = 1,
-	    Errored = 2,
-	    Waiting = 3,
-	    Writable = 4,
+		Closed = 0,
+		Closing = 1,
+		Errored = 2,
+		Waiting = 3,
+		Writable = 4,
 	}
 	export interface Sink<T> {
 	    /**
@@ -950,53 +1087,53 @@ declare module 'dojo-core/streams/WritableStream' {
 	     * and release resources.
 	     * @param reason The reason the stream is closing.
 	     */
-	    abort(reason?: any): Promise<void>;
+		abort(reason?: any): Promise<void>;
 	    /**
 	     * Indicates the stream is closing.  The sink should do any necessary cleanup and release resources.
 	     */
-	    close(): Promise<void>;
+		close(): Promise<void>;
 	    /**
 	     * Requests the sink to prepare for receiving chunks.
 	     * @param error An error callback that can be used at any time by the sink to indicate an error has occurred.
 	     * @returns A promise that resolves when the sink's start operation has finished.  If the promise rejects,
 	     * 		the stream will be errored.
 	     */
-	    start(error: (error: Error) => void): Promise<void>;
+		start(error: (error: Error) => void): Promise<void>;
 	    /**
 	     * Requests the sink write a chunk.
 	     * @param chunk The chunk to be written.
 	     * @returns A promise that resolves when the sink's write operation has finished.  If the promise rejects,
 	     * 		the stream will be errored.
 	     */
-	    write(chunk: T): Promise<void>;
+		write(chunk: T): Promise<void>;
 	}
 	export default class WritableStream<T> {
-	    closed: Promise<void>;
-	    ready: Promise<void>;
-	    state: State;
-	    protected _advancing: boolean;
-	    protected _closedPromise: Promise<void>;
-	    protected _readyPromise: Promise<void>;
-	    protected _rejectClosedPromise: (error: Error) => void;
-	    protected _rejectReadyPromise: (error: Error) => void;
-	    protected _resolveClosedPromise: () => void;
-	    protected _resolveReadyPromise: () => void;
-	    protected _started: boolean;
-	    protected _startedPromise: Promise<any>;
-	    protected _state: State;
-	    protected _storedError: Error;
-	    protected _strategy: Strategy<T>;
-	    protected _underlyingSink: Sink<T>;
-	    protected _queue: SizeQueue<Record<T>>;
-	    protected _writing: boolean;
-	    constructor(underlyingSink: Sink<T>, strategy?: Strategy<T>);
-	    protected _advanceQueue(): void;
-	    protected _close(): void;
-	    protected _error(error: Error): void;
-	    protected _syncStateWithQueue(): void;
-	    abort(reason: any): Promise<void>;
-	    close(): Promise<void>;
-	    write(chunk: T): Promise<void>;
+		closed: Promise<void>;
+		ready: Promise<void>;
+		state: State;
+		protected _advancing: boolean;
+		protected _closedPromise: Promise<void>;
+		protected _readyPromise: Promise<void>;
+		protected _rejectClosedPromise: (error: Error) => void;
+		protected _rejectReadyPromise: (error: Error) => void;
+		protected _resolveClosedPromise: () => void;
+		protected _resolveReadyPromise: () => void;
+		protected _started: boolean;
+		protected _startedPromise: Promise<any>;
+		protected _state: State;
+		protected _storedError: Error;
+		protected _strategy: Strategy<T>;
+		protected _underlyingSink: Sink<T>;
+		protected _queue: SizeQueue<Record<T>>;
+		protected _writing: boolean;
+		constructor(underlyingSink: Sink<T>, strategy?: Strategy<T>);
+		protected _advanceQueue(): void;
+		protected _close(): void;
+		protected _error(error: Error): void;
+		protected _syncStateWithQueue(): void;
+		abort(reason: any): Promise<void>;
+		close(): Promise<void>;
+		write(chunk: T): Promise<void>;
 	}
 
 }
@@ -1009,40 +1146,40 @@ declare module 'dojo-core/streams/ArraySink' {
 	 * the collection of chunks.
 	 */
 	export default class ArraySink<T> implements Sink<T> {
-	    chunks: T[];
-	    abort(reason: any): Promise<void>;
-	    close(): Promise<void>;
-	    start(error: () => void): Promise<void>;
+		chunks: T[];
+		abort(reason: any): Promise<void>;
+		close(): Promise<void>;
+		start(error: () => void): Promise<void>;
 	    /**
 	     *
 	     * @param chunk
 	     */
-	    write(chunk: T): Promise<void>;
+		write(chunk: T): Promise<void>;
 	}
 
 }
 declare module 'dojo-core/streams/QueuingStrategy' {
 	import { Strategy } from 'dojo-core/streams/interfaces';
 	export default class QueuingStrategy<T> implements Strategy<T> {
-	    highWaterMark: number;
-	    constructor(kwArgs: KwArgs);
+		highWaterMark: number;
+		constructor(kwArgs: KwArgs);
 	}
 	export interface KwArgs {
-	    highWaterMark: number;
+		highWaterMark: number;
 	}
 
 }
 declare module 'dojo-core/streams/ByteLengthQueuingStrategy' {
 	import QueuingStrategy from 'dojo-core/streams/QueuingStrategy';
 	export default class ByteLengthQueuingStrategy<T> extends QueuingStrategy<T> {
-	    size(chunk: T): number;
+		size(chunk: T): number;
 	}
 
 }
 declare module 'dojo-core/streams/CountQueuingStrategy' {
 	import QueuingStrategy from 'dojo-core/streams/QueuingStrategy';
 	export default class CountQueuingStrategy<T> extends QueuingStrategy<T> {
-	    size(chunk: T): number;
+		size(chunk: T): number;
 	}
 
 }
@@ -1053,20 +1190,20 @@ declare module 'dojo-core/streams/adapters/ReadableNodeStreamSource' {
 	import { Readable } from 'stream';
 	export type NodeSourceType = Buffer | string;
 	export default class ReadableNodeStreamSource implements Source<NodeSourceType> {
-	    protected _controller: ReadableStreamController<NodeSourceType>;
-	    protected _isClosed: boolean;
-	    protected _onClose: () => void;
-	    protected _onData: (chunk: NodeSourceType) => void;
-	    protected _onError: (error: Error) => void;
-	    protected _nodeStream: Readable;
-	    constructor(nodeStream: Readable);
-	    protected _close(): void;
-	    protected _handleClose(): void;
-	    protected _handleError(error: Error): void;
-	    protected _removeListeners(): void;
-	    cancel(reason?: any): Promise<void>;
-	    pull(controller: ReadableStreamController<NodeSourceType>): Promise<void>;
-	    start(controller: ReadableStreamController<NodeSourceType>): Promise<void>;
+		protected _controller: ReadableStreamController<NodeSourceType>;
+		protected _isClosed: boolean;
+		protected _onClose: () => void;
+		protected _onData: (chunk: NodeSourceType) => void;
+		protected _onError: (error: Error) => void;
+		protected _nodeStream: Readable;
+		constructor(nodeStream: Readable);
+		protected _close(): void;
+		protected _handleClose(): void;
+		protected _handleError(error: Error): void;
+		protected _removeListeners(): void;
+		cancel(reason?: any): Promise<void>;
+		pull(controller: ReadableStreamController<NodeSourceType>): Promise<void>;
+		start(controller: ReadableStreamController<NodeSourceType>): Promise<void>;
 	}
 
 }
@@ -1075,18 +1212,18 @@ declare module 'dojo-core/streams/adapters/WritableNodeStreamSink' {
 	import { Sink } from 'dojo-core/streams/WritableStream';
 	export type NodeSourceType = Buffer | string;
 	export default class WritableNodeStreamSink implements Sink<NodeSourceType> {
-	    protected _encoding: string;
-	    protected _isClosed: boolean;
-	    protected _nodeStream: NodeJS.WritableStream;
-	    protected _onError: (error: Error) => void;
-	    protected _rejectWritePromise: Function;
-	    constructor(nodeStream: NodeJS.WritableStream, encoding?: string);
-	    protected _handleError(error: Error): void;
-	    protected _removeListeners(): void;
-	    abort(reason: any): Promise<void>;
-	    close(): Promise<void>;
-	    start(): Promise<void>;
-	    write(chunk: string): Promise<void>;
+		protected _encoding: string;
+		protected _isClosed: boolean;
+		protected _nodeStream: NodeJS.WritableStream;
+		protected _onError: (error: Error) => void;
+		protected _rejectWritePromise: Function;
+		constructor(nodeStream: NodeJS.WritableStream, encoding?: string);
+		protected _handleError(error: Error): void;
+		protected _removeListeners(): void;
+		abort(reason: any): Promise<void>;
+		close(): Promise<void>;
+		start(): Promise<void>;
+		write(chunk: string): Promise<void>;
 	}
 
 }
@@ -1149,6 +1286,22 @@ declare module 'dojo-core/string' {
 	 * @return The string, padded to the given length if necessary
 	 */
 	export function padStart(text: string, length: number, character?: string): string;
+	/**
+	 * A tag function for template strings to get the template string's raw string form.
+	 * @param callSite Call site object (or a template string in TypeScript, which will transpile to one)
+	 * @param substitutions Values to substitute within the template string (TypeScript will generate these automatically)
+	 * @return String containing the raw template string with variables substituted
+	 *
+	 * @example
+	 * // Within TypeScript; logs 'The answer is:\\n42'
+	 * let answer = 42;
+	 * console.log(string.raw`The answer is:\n${answer}`);
+	 *
+	 * @example
+	 * // The same example as above, but directly specifying a JavaScript object and substitution
+	 * console.log(string.raw({ raw: [ 'The answer is:\\n', '' ] }, 42));
+	 */
+	export function raw(callSite: TemplateStringsArray, ...substitutions: any[]): string;
 	/**
 	 * Returns a string containing the given string repeated the specified number of times.
 	 * @param text The string to repeat
