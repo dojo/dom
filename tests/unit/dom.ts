@@ -457,6 +457,14 @@ registerSuite({
 			tests['<' + tag + '> is created successfully and returned unwrapped'] = createTagTest(tag, true);
 		}
 
+		tests['no tag specified'] = function () {
+			let text = 'test';
+			let result = dom.fromString(text);
+			assert.strictEqual(result.nodeName, '#document-fragment');
+			assert.strictEqual(result.firstChild.nodeName, '#text');
+			assert.strictEqual(result.firstChild.nodeValue, text);
+		}
+
 		return tests;
 	})(),
 
@@ -465,14 +473,20 @@ registerSuite({
 			const siblingProperty = position === dom.Position.Before ? 'previousSibling' : 'nextSibling';
 
 			return function () {
-				let node = document.createElement('div');
+				let node1 = document.createElement('div');
 				let parent = document.createElement('div');
 				let relativeElement = document.createElement('div');
 				parent.appendChild(relativeElement);
 
-				dom.place(node, position, relativeElement);
+				dom.place(node1, position, relativeElement);
 				// TS7017
-				assert.strictEqual((<any> relativeElement)[siblingProperty], node);
+				assert.strictEqual((<any> relativeElement)[siblingProperty], node1);
+
+				let node2 = document.createElement('div');
+				dom.place(node2, position, relativeElement);
+				// TS7017
+				assert.strictEqual((<any> relativeElement)[siblingProperty], node2);
+				assert.strictEqual((<any> node2)[siblingProperty], node1);
 			};
 		}
 
