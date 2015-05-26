@@ -17,6 +17,7 @@
 	"files": [
 		"./src/addCssRule.ts",
 		"./src/dom.ts",
+		"./src/interfaces.d.ts",
 		"./src/main.ts",
 		"./tests/functional/all.ts",
 		"./tests/intern-local.ts",

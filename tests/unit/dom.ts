@@ -2,6 +2,7 @@ import registerSuite = require('intern!object');
 import assert = require('intern/chai!assert');
 import { add as hasAdd, cache as hasCache } from 'dojo-core/has';
 import * as dom from 'src/dom';
+import { CreateArgs } from 'src/interfaces';
 
 let element: HTMLElement;
 
@@ -506,6 +507,48 @@ registerSuite({
 			dom.remove(node);
 			assert.strictEqual(parent.children.length, 0);
 			assert.isNull(node.parentNode);
+		}
+	},
+
+	create: {
+		'correct element created'() {
+			let tagType = 'div';
+			let result = dom.create(tagType);
+			assert.strictEqual(result.nodeName.toLowerCase(), tagType);
+		},
+
+		'attributes and properties are set on element'() {
+			let args: CreateArgs = { foo: 'bar', baz: 'buz', attributes: { 'className': 'test' } },
+				element = dom.create('div', args);
+
+			assert.strictEqual((<any> element).foo, 'bar');
+			assert.strictEqual((<any> element).baz, 'buz');
+			assert.strictEqual(element.getAttribute('className'), 'test');
+		},
+
+		'String children are appended as Text nodes to element'() {
+			let element = dom.create('div', null, ['test']);
+			assert.strictEqual(element.childNodes.length, 1);
+			assert.strictEqual((<any> element.firstChild).nodeName.toLowerCase(), '#text');
+		},
+
+		'Node children are appended to element'() {
+			let child = document.createElement('div');
+			let element = dom.create('div', null, [child]);
+			assert.strictEqual(element.children.length, 1);
+			assert.strictEqual(element.firstChild, child);
+		},
+
+		'children are added before properties are set'() {
+			let selectArgs: CreateArgs = { value: 'bar' };
+			let option1args: CreateArgs = { value: 'foo', text: 'foo' };
+			let option2args: CreateArgs = { value: 'bar', text: 'bar' };
+
+			var select = dom.create('select', selectArgs, [
+				dom.create('option', option1args),
+				dom.create('option', option2args)
+			]);
+			assert.strictEqual((<HTMLInputElement> select).value, 'bar');
 		}
 	}
 });
