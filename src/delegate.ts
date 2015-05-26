@@ -8,13 +8,13 @@ export default function delegate(target: HTMLElement, selector: string, type: an
 	function matches(target: EventTarget) {
 		let node = <any> target;
 		let matchMethod = (function() {
-			if (node.matches) {
+			if (typeof node.matches === 'function') {
 				return 'matches';
 			}
-			if (node.webkitMatchesSelector) {
+			if (typeof node.webkitMatchesSelector === 'function') {
 				return 'webkitMatchesSelector';
 			}
-			if (node.msMatchesSelector) {
+			if (typeof node.msMatchesSelector === 'function') {
 				return 'msMatchesSelector';
 			}
 		})();
