@@ -34,5 +34,5 @@ export default function delegate(target: HTMLElement, selector: string, type: an
 		if (matchedEventTarget) {
 			return listener.call(matchedEventTarget, event);
 		}
-	}, false);
+	});
 }
