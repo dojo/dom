@@ -109,5 +109,23 @@ registerSuite({
 
 		button.click();
 		assert.strictEqual(called, 0);
+	},
+
+	'Invalid CSS selector should not match'() {
+		let called = 0;
+		let ancestor = document.createElement('div');
+		let parent = document.createElement('span');
+		let child = document.createElement('button');
+
+		testDelegate(parent, 'div button', 'click', function() {
+			called++;
+		});
+
+		parent.appendChild(child);
+		ancestor.appendChild(parent);
+		document.body.appendChild(ancestor);
+
+		child.click()
+		assert.strictEqual(called, 0);
 	}
 });
