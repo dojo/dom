@@ -165,7 +165,7 @@ registerSuite({
 				dom.create('option', { value: 'foo' }, [ 'foo' ]),
 				dom.create('option', { value: 'bar' }, [ 'bar' ])
 			]);
-			assert.strictEqual((<HTMLSelectElement> select).value, 'bar');
+			assert.strictEqual(select.value, 'bar');
 		}
 	},
 

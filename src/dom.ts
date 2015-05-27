@@ -1,5 +1,5 @@
 import has from 'dojo-core/has';
-import * as dom from './interfaces';
+import { CreateArgs, CreateFunction } from './interfaces';
 
 /**
  * Validates a token for the CSS class manipulation methods.
@@ -114,7 +114,9 @@ export function contains(parent: Element, node: Node): boolean {
  * @example
  * var div = dom.create('div', null, [ 'hello', ' ', 'world' ]);
  */
-export function create(tagName: string, kwArgs?: dom.CreateArgs, children?: (Node|string)[]): HTMLElement {
+
+export let create: CreateFunction = function (
+		tagName: string, kwArgs?: CreateArgs, children?: (Node | string)[]): HTMLElement {
 	var element = document.createElement(tagName);
 	if (children) {
 		for (let child of children) {
