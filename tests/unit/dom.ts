@@ -2,6 +2,7 @@ import registerSuite = require('intern!object');
 import assert = require('intern/chai!assert');
 import { add as hasAdd, cache as hasCache } from 'dojo-core/has';
 import * as dom from 'src/dom';
+import { CreateArgs } from 'src/interfaces';
 
 let element: HTMLElement;
 
@@ -124,6 +125,49 @@ registerSuite({
 			}
 		};
 	})(),
+
+	create: {
+		'correct element created'() {
+			let tagName = 'div';
+			let result = dom.create(tagName);
+			assert.strictEqual(result.tagName, tagName.toUpperCase());
+		},
+
+		'attributes and properties are set on element'() {
+			let args: CreateArgs = { className: 'bar', attributes: { 'data-foo': 'test' } },
+				element = dom.create('div', args);
+
+			assert.strictEqual(element.className, 'bar');
+			assert.strictEqual(element.getAttribute('data-foo'), 'test');
+		},
+
+		'string children are appended as Text nodes to element'() {
+			let element = dom.create('div', null, [ 'test1', 'test2' ]);
+			assert.strictEqual(element.childNodes.length, 2);
+			assert.strictEqual(element.firstChild.nodeName, '#text');
+			assert.strictEqual(element.lastChild.nodeName, '#text');
+		},
+
+		'children are appended to element'() {
+			let child1 = dom.create('div');
+			let child2 = dom.create('div');
+			let element = dom.create('div', null, [ child1, child2 ]);
+
+			assert.strictEqual(element.children.length, 2);
+			assert.strictEqual(element.firstChild, child1);
+			assert.strictEqual(element.lastChild, child2);
+		},
+
+		'children are added before properties are set'() {
+			let selectArgs: CreateArgs = { value: 'bar' };
+
+			var select = dom.create('select', selectArgs, [
+				dom.create('option', { value: 'foo' }, [ 'foo' ]),
+				dom.create('option', { value: 'bar' }, [ 'bar' ])
+			]);
+			assert.strictEqual((<HTMLSelectElement> select).value, 'bar');
+		}
+	},
 
 	'CSS class manipulation': {
 		setup() {
