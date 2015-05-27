@@ -1,3 +1,42 @@
+declare module 'dojo-core/interfaces' {
+	export interface Handle {
+		destroy(): void;
+	}
+
+	export interface EventObject {
+	    type: string;
+	}
+
+}
+declare module 'dojo-core/observers/interfaces' {
+	import core = require('dojo-core/interfaces');
+
+	export interface Observer extends core.Handle {
+		observeProperty(...property: string[]): void;
+		removeProperty(...property: string[]): void;
+	    nextTurn?: boolean;
+	    onlyReportObserved?: boolean;
+	}
+
+	export interface PropertyEvent {
+		target: {};
+		name: string;
+	}
+
+}
+declare module 'dojo-core/object' {
+	/**
+	 * Copies the values of all enumerable own properties of one or more source objects to the target object.
+	 * @return The modified target object
+	 */
+	export function assign(target: any, ...sources: any[]): any;
+	/**
+	 * Determines whether two values are the same value.
+	 * @return true if the values are the same; false otherwise
+	 */
+	export function is(value1: any, value2: any): boolean;
+
+}
 declare module 'dojo-core/global' {
 	 const globalObject: any;
 	export default globalObject;
@@ -28,12 +67,6 @@ declare module 'dojo-core/has' {
 	export default function has(feature: string): any;
 
 }
-declare module 'dojo-core/interfaces' {
-	export interface Handle {
-		destroy(): void;
-	}
-
-}
 declare module 'dojo-core/queue' {
 	import { Handle } from 'dojo-core/interfaces';
 	export interface QueueItem {
@@ -49,22 +82,136 @@ declare module 'dojo-core/queue' {
 	export let queueMicroTask: (callback: (...args: any[]) => any) => Handle;
 
 }
-declare module 'dojo-core/nextTick' {
-	import { Handle } from 'dojo-core/interfaces'; let nextTick: (callback: () => void) => Handle;
-	export default nextTick;
+declare module 'dojo-core/Scheduler' {
+	import { Handle } from 'dojo-core/interfaces';
+	import { QueueItem } from 'dojo-core/queue';
+	export interface KwArgs {
+	    deferWhileProcessing?: boolean;
+	    queueFunction?: (callback: (...args: any[]) => any) => Handle;
+	}
+	export default class Scheduler {
+	    protected _boundDispatch: () => void;
+	    protected _deferred: QueueItem[];
+	    protected _isProcessing: boolean;
+	    protected _queue: QueueItem[];
+	    protected _task: Handle;
+	    /**
+	     * Determines whether any callbacks registered during should be added to the current batch (`false`)
+	     * or deferred until the next batch (`true`, default).
+	     */
+	    deferWhileProcessing: boolean;
+	    /**
+	     * Allows users to specify the function that should be used to schedule callbacks.
+	     * If no function is provided, then `queueTask` will be used.
+	     */
+	    queueFunction: (callback: (...args: any[]) => any) => Handle;
+	    protected _defer(callback: (...args: any[]) => void): Handle;
+	    protected _dispatch(): void;
+	    protected _schedule(item: QueueItem): void;
+	    constructor(kwArgs?: KwArgs);
+	    schedule(callback: (...args: any[]) => void): Handle;
+	}
+
+}
+declare module 'dojo-core/lang' {
+	import { PropertyEvent, Observer } from 'dojo-core/observers/interfaces';
+	import { Handle } from 'dojo-core/interfaces';
+	export function copy(kwArgs: CopyArgs): any;
+	export interface CopyArgs {
+	    deep?: boolean;
+	    descriptors?: boolean;
+	    inherited?: boolean;
+	    assignPrototype?: boolean;
+	    target?: any;
+	    sources: any[];
+	}
+	export function create(prototype: {}, ...mixins: {}[]): {};
+	export function duplicate(source: {}): {};
+	export function getPropertyNames(object: {}): string[];
+	export function getPropertyDescriptor(object: Object, property: string): PropertyDescriptor;
+	export function isIdentical(a: any, b: any): boolean;
+	export function lateBind(instance: {}, method: string, ...suppliedArgs: any[]): (...args: any[]) => any;
+	export function observe(kwArgs: ObserveArgs): Observer;
+	export interface ObserveArgs {
+	    listener: (events: PropertyEvent[]) => any;
+	    nextTurn?: boolean;
+	    onlyReportObserved?: boolean;
+	    target: {};
+	}
+	export function partial(targetFunction: (...args: any[]) => any, ...suppliedArgs: any[]): (...args: any[]) => any;
+	export function createHandle(destructor: () => void): Handle;
+	export function createCompositeHandle(...handles: Handle[]): Handle;
+
+}
+declare module 'dojo-core/aspect' {
+	import { Handle } from 'dojo-core/interfaces';
+	/**
+	 * Attaches "after" advice to be executed after the original method.
+	 * The advising function will receive the original method's return value and arguments object.
+	 * The value it returns will be returned from the method when it is called (even if the return value is undefined).
+	 * @param target Object whose method will be aspected
+	 * @param methodName Name of method to aspect
+	 * @param advice Advising function which will receive the original method's return value and arguments object
+	 * @return A handle which will remove the aspect when destroy is called
+	 */
+	export function after(target: any, methodName: string, advice: (originalReturn: any, originalArgs: IArguments) => any): Handle;
+	/**
+	 * Attaches "around" advice around the original method.
+	 * @param target Object whose method will be aspected
+	 * @param methodName Name of method to aspect
+	 * @param advice Advising function which will receive the original function
+	 * @return A handle which will remove the aspect when destroy is called
+	 */
+	export function around(target: any, methodName: string, advice: (previous: Function) => Function): Handle;
+	/**
+	 * Attaches "before" advice to be executed before the original method.
+	 * @param target Object whose method will be aspected
+	 * @param methodName Name of method to aspect
+	 * @param advice Advising function which will receive the same arguments as the original, and may return new arguments
+	 * @return A handle which will remove the aspect when destroy is called
+	 */
+	export function before(target: any, methodName: string, advice: (...originalArgs: any[]) => any[]): Handle;
+	/**
+	 * Attaches advice to be executed after the original method.
+	 * The advising function will receive the same arguments as the original method.
+	 * The value it returns will be returned from the method when it is called *unless* its return value is undefined.
+	 * @param target Object whose method will be aspected
+	 * @param methodName Name of method to aspect
+	 * @param advice Advising function which will receive the same arguments as the original method
+	 * @return A handle which will remove the aspect when destroy is called
+	 */
+	export function on(target: any, methodName: string, advice: (...originalArgs: any[]) => any): Handle;
+
+}
+declare module 'dojo-core/Evented' {
+	import { Handle, EventObject } from 'dojo-core/interfaces';
+	export default class Evented {
+	    /**
+	     * Emits an event, firing listeners registered for it.
+	     * @param event The event object to emit
+	     */
+	    emit(data: EventObject): void;
+	    /**
+	     * Listens for an event, calling the listener whenever the event fires.
+	     * @param type Event type to listen for
+	     * @param listener Callback to handle the event when it fires
+	     * @return A handle which will remove the listener when destroy is called
+	     */
+	    on(type: string, listener: (event: EventObject) => void): Handle;
+	}
 
 }
 declare module 'dojo-core/Promise' {
-	/**
-	 * Return true if a given value has a `then` method.
-	 */
-	export function isThenable(value: any): boolean;
 	/**
 	 * Executor is the interface for functions used to initialize a Promise.
 	 */
 	export interface Executor<T> {
 	    (resolve: (value?: T | Thenable<T>) => void, reject: (reason?: any) => void): void;
 	}
+	/**
+	 * Returns true if a given value has a `then` method.
+	 */
+	export function isThenable(value: any): boolean;
 	/**
 	 * PromiseShim is an implementation of the ES2015 Promise specification.
 	 *
@@ -165,7 +312,7 @@ declare module 'dojo-core/Promise' {
 	    static resolve(): Promise<void>;
 	    static resolve<T>(value: (T | Thenable<T>)): Promise<T>;
 	    /**
-	     * Copy another Promise, taking on its inner state.
+	     * Copies another Promise, taking on its inner state.
 	     */
 	    protected static copy<U>(other: Promise<U>): Promise<U>;
 	    /**
@@ -350,14 +497,14 @@ declare module 'dojo-core/async/Task' {
 	     */
 	    private _finally;
 	    /**
-	     * Propogates cancelation down through a Task tree. The Task's state is immediately set to canceled. If a Thenable
+	     * Propagates cancelation down through a Task tree. The Task's state is immediately set to canceled. If a Thenable
 	     * finally task was passed in, it is resolved before calling this Task's finally callback; otherwise, this Task's
 	     * finally callback is immediately executed. `_cancel` is called for each child Task, passing in the value returned
 	     * by this Task's finally callback or a Promise chain that will eventually resolve to that value.
 	     */
 	    private _cancel(finallyTask?);
 	    /**
-	     * Immediately cancel this task if it has not already resolved. This Task and any descendants are synchronously set
+	     * Immediately cancels this task if it has not already resolved. This Task and any descendants are synchronously set
 	     * to the Canceled state and any `finally` added downstream from the canceled Task are invoked.
 	     */
 	    cancel(): void;
@@ -457,62 +604,6 @@ declare module 'dojo-core/async/timing' {
 	}
 
 }
-declare module 'dojo-core/observers/interfaces' {
-	import core = require('dojo-core/interfaces');
-
-	export interface Observer extends core.Handle {
-		observeProperty(...property: string[]): void;
-		removeProperty(...property: string[]): void;
-	    nextTurn?: boolean;
-	    onlyReportObserved?: boolean;
-	}
-
-	export interface PropertyEvent {
-		target: {};
-		name: string;
-	}
-
-}
-declare module 'dojo-core/object' {
-	/**
-	 * Copies the values of all enumerable own properties of one or more source objects to the target object.
-	 * @return The modified target object
-	 */
-	export function assign(target: any, ...sources: any[]): any;
-	/**
-	 * Determines whether two values are the same value.
-	 * @return true if the values are the same; false otherwise
-	 */
-	export function is(value1: any, value2: any): boolean;
-
-}
-declare module 'dojo-core/lang' {
-	import { PropertyEvent, Observer } from 'dojo-core/observers/interfaces';
-	export function copy(kwArgs: CopyArgs): any;
-	export interface CopyArgs {
-	    deep?: boolean;
-	    descriptors?: boolean;
-	    inherited?: boolean;
-	    assignPrototype?: boolean;
-	    target?: any;
-	    sources: any[];
-	}
-	export function create(prototype: {}, ...mixins: {}[]): {};
-	export function duplicate(source: {}): {};
-	export function getPropertyNames(object: {}): string[];
-	export function getPropertyDescriptor(object: Object, property: string): PropertyDescriptor;
-	export function isIdentical(a: any, b: any): boolean;
-	export function lateBind(instance: {}, method: string, ...suppliedArgs: any[]): (...args: any[]) => any;
-	export function observe(kwArgs: ObserveArgs): Observer;
-	export interface ObserveArgs {
-	    listener: (events: PropertyEvent[]) => any;
-	    nextTurn?: boolean;
-	    onlyReportObserved?: boolean;
-	    target: {};
-	}
-	export function partial(targetFunction: (...args: any[]) => any, ...suppliedArgs: any[]): (...args: any[]) => any;
-
-}
 declare module 'dojo-core/math' {
 	/**
 	 * Returns the hyperbolic arccosine of a number.
@@ -536,6 +627,21 @@ declare module 'dojo-core/math' {
 	 */
 	export function atanh(n: number): number;
 	/**
+	 * Returns the cube root of a number.
+	 *
+	 * @param n The number to use in calculation
+	 * @return The result
+	 */
+	export function cbrt(n: number): number;
+	/**
+	 * Returns the number of leading zero bits in the 32-bit
+	 * binary representation of a number.
+	 *
+	 * @param n The number to use in calculation
+	 * @return The result
+	 */
+	export function clz32(n: number): number;
+	/**
 	 * Returns the hyperbolic cosine of a number.
 	 *
 	 * @param n The number to use in calculation
@@ -543,32 +649,33 @@ declare module 'dojo-core/math' {
 	 */
 	export function cosh(n: number): number;
 	/**
-	 * Returns the square root of the sum of squares of its arguments.
-	 *
-	 * @return The result
-	 */
-	export function hypot(...args: number[]): number;
-	/**
-	 * Returns the hyperbolic sine of a number.
-	 *
-	 * @param n The number to use in calculation
-	 * @return The result
-	 */
-	export function sinh(n: number): number;
-	/**
-	 * Returns the hyperbolic tangent of a number.
-	 *
-	 * @param n The number to use in calculation
-	 * @return The result
-	 */
-	export function tanh(n: number): number;
-	/**
 	 * Returns e raised to the specified power minus one.
 	 *
 	 * @param n The number to use in calculation
 	 * @return The result
 	 */
 	export function expm1(n: number): number;
+	/**
+	 * Returns the nearest single-precision float representation of a number.
+	 *
+	 * @param n The number to use in calculation
+	 * @return The result
+	 */
+	export const fround: (n: number) => number;
+	/**
+	 * Returns the square root of the sum of squares of its arguments.
+	 *
+	 * @return The result
+	 */
+	export function hypot(...args: number[]): number;
+	/**
+	 * Returns the result of the 32-bit multiplication of the two parameters.
+	 *
+	 * @param n The number to use in calculation
+	 * @param m The number to use in calculation
+	 * @return The result
+	 */
+	export function imul(n: number, m: number): number;
 	/**
 	 * Returns the base 2 logarithm of a number.
 	 *
@@ -591,42 +698,26 @@ declare module 'dojo-core/math' {
 	 */
 	export function log1p(n: number): number;
 	/**
-	 * Returns the cube root of a number.
-	 *
-	 * @param n The number to use in calculation
-	 * @return The result
-	 */
-	export function cbrt(n: number): number;
-	/**
-	 * Returns the number of leading zero bits in the 32-bit
-	 * binary representation of a number.
-	 *
-	 * @param n The number to use in calculation
-	 * @return The result
-	 */
-	export function clz32(n: number): number;
-	/**
-	 * Returns the nearest single-precision float representation of a number.
-	 *
-	 * @param n The number to use in calculation
-	 * @return The result
-	 */
-	export const fround: (n: number) => number;
-	/**
-	 * Returns the result of the 32-bit multiplication of the two parameters.
-	 *
-	 * @param n The number to use in calculation
-	 * @param m The number to use in calculation
-	 * @return The result
-	 */
-	export function imul(n: number, m: number): number;
-	/**
 	 * Returns the sign of a number, indicating whether the number is positive.
 	 *
 	 * @param n The number to use in calculation
-	 * @return 1 if the number is positive, -1 if the number is negative, or 0 if the number is 0 or NaN
+	 * @return 1 if the number is positive, -1 if the number is negative, or 0 if the number is 0
 	 */
 	export function sign(n: number): number;
+	/**
+	 * Returns the hyperbolic sine of a number.
+	 *
+	 * @param n The number to use in calculation
+	 * @return The result
+	 */
+	export function sinh(n: number): number;
+	/**
+	 * Returns the hyperbolic tangent of a number.
+	 *
+	 * @param n The number to use in calculation
+	 * @return The result
+	 */
+	export function tanh(n: number): number;
 	/**
 	 * Returns the integral part of a number by removing any fractional digits.
 	 *
@@ -634,6 +725,52 @@ declare module 'dojo-core/math' {
 	 * @return The result
 	 */
 	export function trunc(n: number): number;
+
+}
+declare module 'dojo-core/on' {
+	import { Handle, EventObject } from 'dojo-core/interfaces';
+	import Evented from 'dojo-core/Evented';
+	export interface EventCallback {
+	    (event: EventObject): void;
+	}
+	export interface EventEmitter {
+	    on(event: string, listener: EventCallback): EventEmitter;
+	    removeListener(event: string, listener: EventCallback): EventEmitter;
+	}
+	export interface EventTarget {
+	    accessKey?: string;
+	    addEventListener(event: string, listener: EventCallback, capture?: boolean): void;
+	    removeEventListener(event: string, listener: EventCallback, capture?: boolean): void;
+	}
+	export interface ExtensionEvent {
+	    (target: any, listener: EventCallback, capture?: boolean): Handle;
+	}
+	/**
+	 * Provides a normalized mechanism for dispatching events for event emitters, Evented objects, or DOM nodes.
+	 * @param target The target to emit the event from
+	 * @param event The event object to emit
+	 * @return Boolean indicating Whether the event was canceled (this will always be false for event emitters)
+	 */
+	export function emit(target: EventTarget, event: EventObject): boolean;
+	export function emit(target: EventEmitter, event: EventObject): boolean;
+	export function emit(target: Evented, event: EventObject): boolean;
+	/**
+	 * Provides a normalized mechanism for listening to events from event emitters, Evented objects, or DOM nodes.
+	 * @param target Target to listen for event on
+	 * @param type Event type(s) to listen for; may be strings or extension events
+	 * @param listener Callback to handle the event when it fires
+	 * @param capture Whether the listener should be registered in the capture phase (DOM events only)
+	 * @return A handle which will remove the listener when destroy is called
+	 */
+	export default function on(target: EventTarget, type: string, listener: EventCallback, capture?: boolean): Handle;
+	export default function on(target: EventTarget, type: ExtensionEvent, listener: EventCallback, capture?: boolean): Handle;
+	export default function on(target: EventTarget, type: (string | ExtensionEvent)[], listener: EventCallback, capture?: boolean): Handle;
+	export default function on(target: EventEmitter, type: string, listener: EventCallback): Handle;
+	export default function on(target: EventEmitter, type: ExtensionEvent, listener: EventCallback): Handle;
+	export default function on(target: EventEmitter, type: (string | ExtensionEvent)[], listener: EventCallback): Handle;
+	export default function on(target: Evented, type: string, listener: EventCallback): Handle;
+	export default function on(target: Evented, type: ExtensionEvent, listener: EventCallback): Handle;
+	export default function on(target: Evented, type: (string | ExtensionEvent)[], listener: EventCallback): Handle;
 
 }
 declare module 'dojo-core/streams/ReadableStreamReader' {
@@ -1149,6 +1286,22 @@ declare module 'dojo-core/string' {
 	 * @return The string, padded to the given length if necessary
 	 */
 	export function padStart(text: string, length: number, character?: string): string;
+	/**
+	 * A tag function for template strings to get the template string's raw string form.
+	 * @param callSite Call site object (or a template string in TypeScript, which will transpile to one)
+	 * @param substitutions Values to substitute within the template string (TypeScript will generate these automatically)
+	 * @return String containing the raw template string with variables substituted
+	 *
+	 * @example
+	 * // Within TypeScript; logs 'The answer is:\\n42'
+	 * let answer = 42;
+	 * console.log(string.raw`The answer is:\n${answer}`);
+	 *
+	 * @example
+	 * // The same example as above, but directly specifying a JavaScript object and substitution
+	 * console.log(string.raw({ raw: [ 'The answer is:\\n', '' ] }, 42));
+	 */
+	export function raw(callSite: TemplateStringsArray, ...substitutions: any[]): string;
 	/**
 	 * Returns a string containing the given string repeated the specified number of times.
 	 * @param text The string to repeat
