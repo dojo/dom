@@ -100,7 +100,9 @@ registerSuite({
 			},
 
 			afterEach() {
-				document.body.removeChild(element);
+				if (element.parentNode) {
+					element.parentNode.removeChild(element);
+				}
 			},
 
 			'basic tests'() {
@@ -109,6 +111,16 @@ registerSuite({
 
 			'tests with text node'() {
 				testContains(element, document.createTextNode(' '));
+			},
+
+			'inclusive descendant'() {
+				assert.isTrue(dom.contains(element, element),
+					'should return true if same node is passed for both arguments');
+			},
+
+			'null argument'() {
+				assert.isFalse(dom.contains(element, null),
+					'should return false (and not error) if 2nd argument is null');
 			}
 		};
 	})(),

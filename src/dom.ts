@@ -84,6 +84,13 @@ export function contains(parent: Element, node: Node): boolean {
 	// and IE has a known bug involving passing a text node as the argument:
 	// https://connect.microsoft.com/IE/feedback/details/780874/node-contains-is-incorrect
 	// Meanwhile, compareDocumentPosition works in all supported browsers.
+
+	if (node == null) {
+		return false;
+	}
+	if (parent === node) {
+		return true;
+	}
 	return Boolean(node.compareDocumentPosition(parent) & Node.DOCUMENT_POSITION_CONTAINS);
 }
 
