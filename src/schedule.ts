@@ -41,12 +41,11 @@ class DomScheduler extends Scheduler {
 	 * Schedules a read or write operation.
 	 */
 	scheduleOperation(callback: (...args: any[]) => void, operation: Operation): Handle {
-		const item: DomQueueItem = {
+		return this._schedule({
 			isActive: true,
 			callback: callback,
 			operation: operation
-		};
-		return this.schedule(item);
+		});
 	}
 }
 
