@@ -20,6 +20,7 @@
 		"./src/dom.ts",
 		"./src/form.ts",
 		"./src/interfaces.d.ts",
+		"./src/has.ts",
 		"./src/main.ts",
 		"./tests/functional/all.ts",
 		"./tests/intern-local.ts",

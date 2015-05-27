@@ -8,8 +8,6 @@ import * as dom from 'src/dom';
 let container = document.createElement('div');
 let handles: (Handle)[] = [];
 
-document.body.appendChild(container);
-
 function testDelegate(...args: any[]) {
 	let handle = delegate.apply(null, arguments);
 	handles.push(handle);
@@ -18,6 +16,14 @@ function testDelegate(...args: any[]) {
 
 registerSuite({
 	name: 'delegate',
+
+	setup() {
+		document.body.appendChild(container);
+	},
+
+	teardown() {
+		document.body.removeChild(container);
+	},
 
 	afterEach() {
 		while (handles.length > 0) {
@@ -43,7 +49,21 @@ registerSuite({
 		assert.strictEqual(called, 2);
 	},
 
-	'CSS selector and text node target'() {
+	'CSS selector with array of events'() {
+		let called = 0;
+		let button = document.createElement('button');
+
+		delegate(container, 'button', ['click'], function() {
+			called++;
+		});
+
+		container.appendChild(button);
+
+		button.click();
+		assert.strictEqual(called, 1);
+	},
+
+	'CSS selector and text node event target'() {
 		let called = 0;
 		let div = document.createElement('div');
 		div.innerHTML = 'test';
@@ -63,7 +83,7 @@ registerSuite({
 		assert.strictEqual(called, 1);
 	},
 
-	'listening on body'() {
+	'Listening on body'() {
 		let called = 0;
 		let button = document.createElement('button');
 
