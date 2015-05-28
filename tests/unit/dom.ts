@@ -481,6 +481,12 @@ registerSuite({
 				dom.place(node, position, relativeElement);
 				// TS7017
 				assert.strictEqual((<any> relativeElement)[siblingProperty], node);
+
+				if (siblingProperty === 'nextSibling') {
+					let nodeTwo = document.createElement('div');
+					dom.place(nodeTwo, position, relativeElement);
+					assert.strictEqual((<any> relativeElement)[siblingProperty], nodeTwo);
+				}
 			};
 		}
 
