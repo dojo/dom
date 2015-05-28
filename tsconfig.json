@@ -20,6 +20,7 @@
 		"./src/form.ts",
 		"./src/interfaces.d.ts",
 		"./src/main.ts",
+		"./src/schedule.ts",
 		"./tests/functional/all.ts",
 		"./tests/intern-local.ts",
 		"./tests/intern.ts",
@@ -34,6 +35,7 @@
 		"./tests/unit/all.ts",
 		"./tests/unit/dom.ts",
 		"./tests/unit/form.ts",
+		"./tests/unit/schedule.ts",
 		"./typings/tsd.d.ts"
 	]
 }
