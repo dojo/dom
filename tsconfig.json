@@ -16,8 +16,10 @@
 	],
 	"files": [
 		"./src/addCssRule.ts",
+		"./src/delegate.ts",
 		"./src/dom.ts",
 		"./src/form.ts",
+		"./src/has.ts",
 		"./src/interfaces.d.ts",
 		"./src/main.ts",
 		"./tests/functional/all.ts",
@@ -32,6 +34,7 @@
 		"./tests/typings/tsd.d.ts",
 		"./tests/unit/addCssRule.ts",
 		"./tests/unit/all.ts",
+		"./tests/unit/delegate.ts",
 		"./tests/unit/dom.ts",
 		"./tests/unit/form.ts",
 		"./typings/tsd.d.ts"
