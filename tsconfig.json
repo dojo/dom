@@ -18,6 +18,7 @@
 		"./src/addCssRule.ts",
 		"./src/dom.ts",
 		"./src/form.ts",
+		"./src/geometry.ts",
 		"./src/interfaces.d.ts",
 		"./src/main.ts",
 		"./src/schedule.ts",
@@ -36,6 +37,7 @@
 		"./tests/unit/dom.ts",
 		"./tests/unit/form.ts",
 		"./tests/unit/schedule.ts",
+		"./tests/unit/geometry.ts",
 		"./typings/tsd.d.ts"
 	]
 }
