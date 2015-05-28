@@ -87,6 +87,34 @@ registerSuite({
 			});
 		},
 
+		'reads within writes'() {
+			const operations: string[] = [];
+			return Promise.all([
+				new Promise(function (resolve, reject) {
+					write(function () {
+						operations.push('write1');
+						read(function () {
+							operations.push('read3');
+							resolve();
+						});
+					});
+				}),
+
+				new Promise(function (resolve, reject) {
+					write(function () {
+						operations.push('write2');
+						read(function () {
+							operations.push('read4');
+							resolve();
+						});
+					});
+				}),
+			]).then(function () {
+				// Read queue should fire before write
+				assert.deepEqual(operations, [ 'write1', 'write2', 'read3', 'read4' ]);
+			});
+		},
+
 		'reads within reads before writes'() {
 			const operations: string[] = [];
 			return Promise.all([
@@ -133,20 +161,10 @@ registerSuite({
 							resolve();
 						});
 					});
-				}),
-
-				new Promise(function (resolve, reject) {
-					write(function () {
-						operations.push('write2');
-						read(function () {
-							operations.push('read4');
-							resolve();
-						});
-					});
-				}),
+				})
 			]).then(function () {
 				// Read queue should fire before write
-				assert.deepEqual(operations, [ 'read1', 'read2', 'write1', 'write2', 'read3', 'read4' ]);
+				assert.deepEqual(operations, [ 'read1', 'read2', 'write1', 'read3' ]);
 			});
 		},
 

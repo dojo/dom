@@ -1,11 +1,11 @@
 import { Handle } from 'dojo-core/interfaces';
 import { queueAnimationTask, QueueItem } from 'dojo-core/queue';
 
-const readQueue: QueueItem[] = [];
-const writeQueue: QueueItem[] = [];
-const deferredReads: QueueItem[] = [];
+let deferredReads: QueueItem[] = [];
 let isWriting = false;
+let readQueue: QueueItem[] = [];
 let task: Handle;
+const writeQueue: QueueItem[] = [];
 
 function createHandle(item: QueueItem): Handle {
 	return {
@@ -15,11 +15,6 @@ function createHandle(item: QueueItem): Handle {
 			item.callback = undefined;
 		}
 	};
-}
-
-function deferRead(item: QueueItem): Handle {
-	deferredReads.push(item);
-	return createHandle(item);
 }
 
 function dispatch() {
@@ -32,9 +27,10 @@ function dispatch() {
 	drain(writeQueue);
 	isWriting = false;
 
-	let item: QueueItem;
-	while (item = deferredReads.shift()) {
-		enqueue(readQueue, item);
+	if (deferredReads.length > 0) {
+		readQueue = readQueue.concat(deferredReads);
+		deferredReads = [];
+		task = task || queueAnimationTask(dispatch);
 	}
 }
 
@@ -47,13 +43,6 @@ function drain(queue: QueueItem[]) {
 	}
 }
 
-function enqueue(queue: QueueItem[], item: QueueItem): void {
-	if (!task) {
-		task = queueAnimationTask(dispatch);
-	}
-	queue.push(item);
-}
-
 function schedule(queue: QueueItem[], callback: (...args: any[]) => void): Handle {
 	const item: QueueItem = {
 		isActive: true,
@@ -61,10 +50,13 @@ function schedule(queue: QueueItem[], callback: (...args: any[]) => void): Handl
 	} 
 
 	if (isWriting && queue === readQueue) {
-		return deferRead(item);
+		deferredReads.push(item);
+	}
+	else {
+		queue.push(item);
+		task = task || queueAnimationTask(dispatch);
 	}
 
-	enqueue(queue, item);
 	return createHandle(item);
 }
 
