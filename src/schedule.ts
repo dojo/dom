@@ -1,55 +1,72 @@
 import { Handle } from 'dojo-core/interfaces';
-import Scheduler from 'dojo-core/Scheduler';
 import { queueAnimationTask, QueueItem } from 'dojo-core/queue';
 
-/**
- * Specifies a read or write operation
- */
-enum Operation {
-	READ,
-	WRITE
-}
+const readQueue: QueueItem[] = [];
+const writeQueue: QueueItem[] = [];
+const deferredReads: QueueItem[] = [];
+let isWriting = false;
+let task: Handle;
 
-/**
- * A QueueItem representing a particular type of operation.
- */
-interface DomQueueItem extends QueueItem {
-	operation: Operation;
-}
-
-/**
- * An extension of Scheduler that allows read and write operations to be scheduled and dispatched in the proper order.
- */
-class DomScheduler extends Scheduler {
-	/**
-	 * Overrides Scheduler#_dispatch to ensure that reads happen before writes.
-	 */
-	protected _dispatch(): void {
-		const reads: DomQueueItem[] = [];
-		const writes: DomQueueItem[] = [];
-		const queue = <DomQueueItem[]> this._queue;
-
-		for (const item of queue) {
-			(item.operation === Operation.READ ? reads : writes).push(item);
+function createHandle(item: QueueItem): Handle {
+	return {
+		destroy() {
+			this.destroy = function () {};
+			item.isActive = false;
+			item.callback = undefined;
 		}
+	};
+}
 
-		this._queue = reads.concat(writes);
-		super._dispatch();
-	}
+function deferRead(item: QueueItem): Handle {
+	deferredReads.push(item);
+	return createHandle(item);
+}
 
-	/**
-	 * Schedules a read or write operation.
-	 */
-	scheduleOperation(callback: (...args: any[]) => void, operation: Operation): Handle {
-		return this._schedule({
-			isActive: true,
-			callback: callback,
-			operation: operation
-		});
+function dispatch() {
+	task.destroy();
+	task = undefined;
+
+	drain(readQueue);
+
+	isWriting = true;
+	drain(writeQueue);
+	isWriting = false;
+
+	let item: QueueItem;
+	while (item = deferredReads.shift()) {
+		enqueue(readQueue, item);
 	}
 }
 
-const scheduler = new DomScheduler({ queueFunction: queueAnimationTask });
+function drain(queue: QueueItem[]) {
+	let item: QueueItem;
+	while (item = queue.shift()) {
+		if (item.isActive) {
+			item.callback();
+		}
+	}
+}
+
+function enqueue(queue: QueueItem[], item: QueueItem): void {
+	if (!task) {
+		task = queueAnimationTask(dispatch);
+	}
+	queue.push(item);
+}
+
+function schedule(queue: QueueItem[], callback: (...args: any[]) => void): Handle {
+	const item: QueueItem = {
+		isActive: true,
+		callback: callback
+	} 
+
+	if (isWriting && queue === readQueue) {
+		return deferRead(item);
+	}
+
+	enqueue(queue, item);
+	return createHandle(item);
+}
 
 /**
  * Schedules a read operation.
@@ -58,7 +75,7 @@ const scheduler = new DomScheduler({ queueFunction: queueAnimationTask });
  * @returns a handle that can be used to cancel the operation
  */
 export function read(callback: (...args: any[]) => void): Handle {
-	return scheduler.scheduleOperation(callback, Operation.READ);
+	return schedule(readQueue, callback);
 }
 
 /**
@@ -68,5 +85,5 @@ export function read(callback: (...args: any[]) => void): Handle {
  * @returns a handle that can be used to cancel the operation
  */
 export function write(callback: (...args: any[]) => void): Handle {
-	return scheduler.scheduleOperation(callback, Operation.WRITE);
+	return schedule(writeQueue, callback);
 }
