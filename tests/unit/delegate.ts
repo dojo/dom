@@ -111,7 +111,7 @@ registerSuite({
 		assert.strictEqual(called, 0);
 	},
 
-	'Invalid CSS selector should not match'() {
+	'CSS selector should only match descendants of delegated target'() {
 		let called = 0;
 		let parent = document.createElement('span');
 		let child = document.createElement('button');
@@ -125,5 +125,56 @@ registerSuite({
 
 		child.click()
 		assert.strictEqual(called, 0);
+	},
+
+	'Comma-separated selectors handled correctly'() {
+		let called = 0;
+		let buttonOne = document.createElement('button');
+		let buttonTwo = document.createElement('button');
+		buttonOne.className = 'one';
+		buttonTwo.className = 'two';
+
+		delegate(container, '.one, .two', 'click', function() {
+			called++;
+		});
+
+		container.appendChild(buttonOne);
+		container.appendChild(buttonTwo);
+
+		buttonOne.click();
+		buttonTwo.click();
+		assert.strictEqual(called, 2);
+	},
+
+	'Double quotes in an existing ID should be escaped'() {
+		let called = 0;
+		let button = document.createElement('button');
+
+		container.setAttribute('id', 'te"st');
+
+		delegate(container, 'button', 'click', function() {
+			called++;
+		});
+
+		container.appendChild(button);
+
+		button.click();
+		assert.strictEqual(called, 1);
+	},
+
+	'Existing ID containing special characters'() {
+		let called = 0;
+		let button = document.createElement('button');
+
+		container.setAttribute('id', 'te.s-t_:lol');
+
+		delegate(container, 'button', 'click', function() {
+			called++;
+		});
+
+		container.appendChild(button);
+
+		button.click();
+		assert.strictEqual(called, 1);
 	}
 });
