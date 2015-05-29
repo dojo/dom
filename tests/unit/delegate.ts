@@ -6,13 +6,7 @@ import delegate from 'src/delegate';
 import * as dom from 'src/dom';
 
 let container = document.createElement('div');
-let handles: (Handle)[] = [];
-
-function testDelegate(...args: any[]) {
-	let handle = delegate.apply(null, arguments);
-	handles.push(handle);
-	return handle;
-}
+let handles: Handle[] = [];
 
 registerSuite({
 	name: 'delegate',
@@ -26,20 +20,22 @@ registerSuite({
 	},
 
 	afterEach() {
-		while (handles.length > 0) {
-			handles.pop().destroy();
+		for (let handle of handles) {
+			handle.destroy();
 		}
+		handles = [];
 		container.innerHTML = '';
+		container.removeAttribute('id');
 	},
 
-	'CSS selector matching multiple elements'() {
+	'CSS selector matching multiple elements, added after event is registered'() {
 		let called = 0;
 		let buttonOne = document.createElement('button');
 		let buttonTwo = document.createElement('button');
 
-		delegate(container, 'button', 'click', function() {
+		handles.push(delegate(container, 'button', 'click', function () {
 			called++;
-		});
+		}));
 
 		container.appendChild(buttonOne);
 		container.appendChild(buttonTwo);
@@ -53,9 +49,9 @@ registerSuite({
 		let called = 0;
 		let button = document.createElement('button');
 
-		delegate(container, 'button', ['click'], function() {
+		handles.push(delegate(container, 'button', [ 'click' ], function () {
 			called++;
-		});
+		}));
 
 		container.appendChild(button);
 
@@ -63,18 +59,34 @@ registerSuite({
 		assert.strictEqual(called, 1);
 	},
 
-	'CSS selector and text node event target'() {
+	'CSS selector matching a node in between the delegation root and the event target'() {
+		let called = 0;
+		let button = document.createElement('button');
+		let div = document.createElement('div');
+
+		handles.push(delegate(container, 'div', 'click', function () {
+			called++;
+		}));
+
+		div.appendChild(button);
+		container.appendChild(div);
+
+		button.click();
+		assert.strictEqual(called, 1);
+	},
+
+	'Text node event target'() {
 		let called = 0;
 		let div = document.createElement('div');
 		div.innerHTML = 'test';
 
-		testDelegate(container, 'div', 'click', function() {
+		handles.push(delegate(container, 'div', 'click', function () {
 			called++;
-		});
+		}));
 
 		container.appendChild(div);
-		
-		emit(div, {
+
+		emit(div.firstChild, {
 			type: 'click',
 			bubbles: true,
 			cancelable: true
@@ -87,23 +99,23 @@ registerSuite({
 		let called = 0;
 		let button = document.createElement('button');
 
-		testDelegate(document.body, 'button', 'click', function() {
+		handles.push(delegate(document.body, 'button', 'click', function () {
 			called++;
-		});
+		}));
 
-		document.body.appendChild(button);
+		container.appendChild(button);
 
 		button.click();
 		assert.strictEqual(called, 1);
 	},
 
-	'Should not throw when selector is not found'() {
+	'Should not fire when selector is not found'() {
 		let called = 0;
 		let button = document.createElement('button');
 
-		testDelegate(container, 'not-found', 'click', function() {
+		handles.push(delegate(container, 'not-found', 'click', function () {
 			called++;
-		});
+		}));
 
 		document.body.appendChild(button);
 
@@ -116,27 +128,27 @@ registerSuite({
 		let parent = document.createElement('span');
 		let child = document.createElement('button');
 
-		testDelegate(parent, 'div button', 'click', function() {
+		handles.push(delegate(parent, 'div button', 'click', function () {
 			called++;
-		});
+		}));
 
 		parent.appendChild(child);
 		container.appendChild(parent);
 
-		child.click()
+		child.click();
 		assert.strictEqual(called, 0);
 	},
 
-	'Comma-separated selectors handled correctly'() {
+	'Comma-separated selector handling'() {
 		let called = 0;
 		let buttonOne = document.createElement('button');
 		let buttonTwo = document.createElement('button');
 		buttonOne.className = 'one';
 		buttonTwo.className = 'two';
 
-		delegate(container, '.one, .two', 'click', function() {
+		handles.push(delegate(container, '.one, .two', 'click', function () {
 			called++;
-		});
+		}));
 
 		container.appendChild(buttonOne);
 		container.appendChild(buttonTwo);
@@ -146,15 +158,15 @@ registerSuite({
 		assert.strictEqual(called, 2);
 	},
 
-	'Double quotes in an existing ID should be escaped'() {
+	'Double quotes in an existing ID should be escaped in the applied selector'() {
 		let called = 0;
 		let button = document.createElement('button');
 
 		container.setAttribute('id', 'te"st');
 
-		delegate(container, 'button', 'click', function() {
+		handles.push(delegate(container, 'button', 'click', function () {
 			called++;
-		});
+		}));
 
 		container.appendChild(button);
 
@@ -162,19 +174,29 @@ registerSuite({
 		assert.strictEqual(called, 1);
 	},
 
-	'Existing ID containing special characters'() {
+	'Delegate on element with existing ID containing special characters'() {
 		let called = 0;
 		let button = document.createElement('button');
 
-		container.setAttribute('id', 'te.s-t_:lol');
+		container.setAttribute('id', 't,e.s t_:');
 
-		delegate(container, 'button', 'click', function() {
+		handles.push(delegate(container, 'button', 'click', function () {
 			called++;
-		});
+		}));
 
 		container.appendChild(button);
 
 		button.click();
 		assert.strictEqual(called, 1);
+	},
+
+	'Delegate on ID-less element using invalid selector'() {
+		let button = document.createElement('button');
+
+		handles.push(delegate(container, 'button.', 'click', function () {}));
+
+		container.appendChild(button);
+		button.click();
+		assert.strictEqual(container.id, '', 'container ID should be reverted even if matches throws');
 	}
 });

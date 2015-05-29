@@ -1,8 +1,8 @@
 import { Handle } from 'dojo-core/interfaces';
-import on, { ExtensionEvent } from 'dojo-core/on';
+import on from 'dojo-core/on';
 import has from './has';
 
-const matchMethod = has('element-match');
+const matchesMethod = has('dom-element-matches');
 
 /**
  * Provides a normalized mechanism for using a single event handler to listen
@@ -25,46 +25,61 @@ const matchMethod = has('element-match');
  * });
  */
 export default function delegate(target: HTMLElement, selector: string, type: string, listener: (event: UIEvent) => void): Handle;
-export default function delegate(target: HTMLElement, selector: string, type: ExtensionEvent, listener: (event: UIEvent) => void): Handle;
-export default function delegate(target: HTMLElement, selector: string, type: (string | ExtensionEvent)[], listener: (event: UIEvent) => void): Handle;
+export default function delegate(target: HTMLElement, selector: string, type: string[], listener: (event: UIEvent) => void): Handle;
 export default function delegate(target: HTMLElement, selector: string, type: any, listener: (event: UIEvent) => void): Handle {
-	function matches(node: HTMLElement, selector: string) {
+	function matches(element: HTMLElement, selector: string) {
+		// Search in parents of the given element as well,
+		// since the event could have bubbled into an element matching the selector
+
 		// TS7017
-		while (!(<any> node)[matchMethod](selector)) {
-			if (!node.parentNode || !(<any> node.parentNode)[matchMethod]) {
+		while (!(<any> element)[matchesMethod](selector)) {
+			if (!element.parentNode || !(<any> element.parentNode)[matchesMethod]) {
 				return null;
 			}
-			node = <HTMLElement> node.parentNode;
+			element = <HTMLElement> element.parentNode;
 		}
 
-		return node;
+		return element;
 	}
 
-	return on(<EventTarget> target, type, function(event: Event) {
-		let existingId = target.getAttribute('id');
+	return on(target, type, function(event: Event) {
+		// Add an ID to the selector used for matching, to avoid unwanted matches due to elements outside the root
+		// (Adapted from code in Dojo 1, which itself was adapted from a strategy employed by Sizzle)
+		const existingId = target.getAttribute('id');
 		let id = existingId || '__dojo__';
 
 		if (!existingId) {
 			target.setAttribute('id', id);
 		} else {
-			id = id.replace(/"/g, '\\$&');
+			id = id.replace(/"/g, '\\"');
 		}
 
-		let selectors = selector.split(',');
+		let selectors = selector.split(/\s*,\s*/);
 		for (let i = 0; i < selectors.length; i++) {
 			selectors[i] = '[id="' + id + '"] ' + selectors[i];
 		}
-		let tempSelector = selectors.join(',');
-		let matchedEventTarget = matches(<HTMLElement> event.target, tempSelector);
+
+		let eventTarget = <Node> event.target;
+		if (eventTarget.nodeType !== 1) {
+			// Text nodes don't have .matches; other node types generally aren't applicable
+			eventTarget = eventTarget.parentNode;
+		}
+		let matchedEventTarget: HTMLElement;
 
 		try {
-			if (matchedEventTarget) {
-				return listener.call(matchedEventTarget, event);
-			}
-		} finally {
+			matchedEventTarget = matches(<HTMLElement> eventTarget, selectors.join(','));
+		}
+		catch (error) {
+			// Nothing needs to be done here, but this block is needed to suppress console errors
+		}
+		finally {
 			if (!existingId) {
 				target.removeAttribute('id');
 			}
+		}
+
+		if (matchedEventTarget) {
+			return listener.call(matchedEventTarget, event);
 		}
 	});
 }
