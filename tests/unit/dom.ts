@@ -180,15 +180,15 @@ registerSuite({
 
 		addClass: {
 			'add single class'() {
-				assert.notInclude(element.className, 'test');
+				assert.strictEqual(element.className, '');
 				dom.addClass(element, 'test');
 				assert.strictEqual(element.className, 'test');
 			},
 
 			'add multiple classes'() {
 				dom.addClass(element, 'test1', 'test2');
-				assert.include(element.className, 'test1');
-				assert.include(element.className, 'test2');
+				dom.addClass(element, 'test3');
+				assert.strictEqual(element.className, 'test1 test2 test3');
 			},
 
 			'null node should not throw'() {
