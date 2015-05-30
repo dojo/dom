@@ -47,6 +47,8 @@ registerSuite({
 				addFeature('test-lazy', function () {
 					return false;
 				});
+
+				dom.applyFeatureClass('test-boolean', 'test-number', 'test-string', 'test-lazy');
 				assert.strictEqual(document.documentElement.className, '');
 			},
 
