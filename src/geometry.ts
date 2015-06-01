@@ -6,6 +6,13 @@ function pxToNumber(value: string): number {
 }
 
 /**
+ * Given a number, returns a CSS px value (e.g. '10px')
+ */
+function numberToPx(value: num): string {
+	return num + 'px';
+}
+
+/**
  * Returns an object satisfying the ClientRect interface that is the result of adjusting the given ClientRect
  * by the given dimensions.  The resulting object will have larger dimensions if the adjustment parameters
  * are positive, or smaller dimensions if they are negative.
@@ -21,6 +28,13 @@ function adjustBox(box: ClientRect, top: number, right: number, bottom: number, 
 	};
 }
 
+export interface SettableClientRect {
+    height?: number;
+    left?: number;
+    top?: number;
+    width?: number;
+}
+
 /**
  * Returns an object with information on the dimensions of an Element's border box.
  * @param element The Element to measure
@@ -30,6 +44,34 @@ export function getBorderBox(element: Element): ClientRect {
 	// Return a plain/mutable object (not a native read-only ClientRect) to be consistent with the other functions.
 	// We may end up modifying these values anyway (for scroll adjustment).
 	return adjustBox(element.getBoundingClientRect(), 0, 0, 0, 0);
+}
+
+/**
+ * Sets the dimensions of an Element's border box.
+ * @param element The Element to modify
+ * @param rect The Element to modify
+ */
+export function setBorderBox(element: HTMLElement, rect: SettableClientRect): void {
+	const style = getComputedStyle(element);
+	const borderBox = style.boxSizing && style.boxSizing === 'border-box';
+
+	if (rect.height) {
+		element.style.height = numberToPx(borderBox ? rect.height :
+			rect.height - (2 * pxToNumber(style.paddingTop)) - (2 * pxToNumber(style.borderTopWidth)));
+	}
+
+	if (rect.width) {
+		element.style.width = numberToPx(borderBox ? rect.width :
+			rect.width - (2 * pxToNumber(style.paddingLeft)) - (2 * pxToNumber(style.borderLeftWidth)));
+	}
+
+	if (rect.top) {
+		element.style.top = numberToPx(rect.top - pxToNumber(style.marginTop));
+	}
+
+	if (rect.left) {
+		element.style.left = numberToPx(rect.left - pxToNumber(style.marginLeft));
+	}
 }
 
 /**
