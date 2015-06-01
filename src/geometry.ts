@@ -47,34 +47,6 @@ export function getBorderBox(element: Element): ClientRect {
 }
 
 /**
- * Sets the dimensions of an Element's border box.
- * @param element The Element to modify
- * @param rect The Element to modify
- */
-export function setBorderBox(element: HTMLElement, rect: SettableClientRect): void {
-	const style = getComputedStyle(element);
-	const borderBox = style.boxSizing && style.boxSizing === 'border-box';
-
-	if (rect.height) {
-		element.style.height = numberToPx(borderBox ? rect.height :
-			rect.height - (2 * pxToNumber(style.paddingTop)) - (2 * pxToNumber(style.borderTopWidth)));
-	}
-
-	if (rect.width) {
-		element.style.width = numberToPx(borderBox ? rect.width :
-			rect.width - (2 * pxToNumber(style.paddingLeft)) - (2 * pxToNumber(style.borderLeftWidth)));
-	}
-
-	if (rect.top) {
-		element.style.top = numberToPx(rect.top - pxToNumber(style.marginTop));
-	}
-
-	if (rect.left) {
-		element.style.left = numberToPx(rect.left - pxToNumber(style.marginLeft));
-	}
-}
-
-/**
  * Returns an object with information on the dimensions of an Element's content box.
  * @param element The Element to measure
  * @return An object reporting the top, right, bottom, left, width, and height of the Element's content box
@@ -118,4 +90,60 @@ export function getPaddingBox(element: Element): ClientRect {
 		-pxToNumber(style.borderBottomWidth),
 		-pxToNumber(style.borderLeftWidth)
 	);
+}
+
+/**
+ * Sets the dimensions of an Element's border box.
+ * @param element The Element to modify
+ * @param rect The Element to modify
+ */
+export function setBorderBox(element: HTMLElement, rect: SettableClientRect): void {
+	const style = getComputedStyle(element);
+	const borderBox = style.boxSizing && style.boxSizing === 'border-box';
+
+	if (rect.height) {
+		element.style.height = numberToPx(borderBox ? rect.height :
+			rect.height - (2 * pxToNumber(style.paddingTop)) - (2 * pxToNumber(style.borderTopWidth)));
+	}
+
+	if (rect.width) {
+		element.style.width = numberToPx(borderBox ? rect.width :
+			rect.width - (2 * pxToNumber(style.paddingLeft)) - (2 * pxToNumber(style.borderLeftWidth)));
+	}
+
+	if (rect.top) {
+		element.style.top = numberToPx(rect.top - pxToNumber(style.marginTop));
+	}
+
+	if (rect.left) {
+		element.style.left = numberToPx(rect.left - pxToNumber(style.marginLeft));
+	}
+}
+
+/**
+ * Sets the dimensions of an Element's content box.
+ * @param element The Element to modify
+ * @param rect An object containing optional number properties for height, left, top, and width
+ */
+export function setContentBox(element: HTMLElement, rect: SettableClientRect): void {
+	const style = getComputedStyle(element);
+	const borderBox = style.boxSizing && style.boxSizing === 'border-box';
+
+	if (rect.height) {
+		element.style.height = numberToPx(!borderBox ? rect.height :
+			rect.height - (2 * pxToNumber(style.paddingTop)) - (2 * pxToNumber(style.borderTopWidth)));
+	}
+
+	if (rect.width) {
+		element.style.width = numberToPx(!borderBox ? rect.width :
+			rect.width - (2 * pxToNumber(style.paddingLeft)) - (2 * pxToNumber(style.borderLeftWidth)));
+	}
+
+	if (rect.top) {
+		element.style.top = numberToPx(rect.top - pxToNumber(style.marginTop) - pxToNumber(style.borderLeftWidth) - pxToNumber(style.paddingTop));
+	}
+
+	if (rect.left) {
+		element.style.left = numberToPx(rect.left - pxToNumber(style.marginLeft) - pxToNumber(style.borderLeftWidth) - pxToNumber(style.paddingLeft));
+	}
 }
