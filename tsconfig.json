@@ -7,7 +7,8 @@
 		"outDir": "_build/",
 		"removeComments": false,
 		"sourceMap": true,
-		"target": "es5"
+		"target": "es5",
+		"suppressImplicitAnyIndexErrors": true
 	},
 	"filesGlob": [
 		"./src/**/*.ts",
@@ -18,6 +19,7 @@
 		"./src/addCssRule.ts",
 		"./src/dom.ts",
 		"./src/form.ts",
+		"./src/geometry.ts",
 		"./src/interfaces.d.ts",
 		"./src/main.ts",
 		"./src/schedule.ts",
@@ -35,6 +37,7 @@
 		"./tests/unit/all.ts",
 		"./tests/unit/dom.ts",
 		"./tests/unit/form.ts",
+		"./tests/unit/geometry.ts",
 		"./tests/unit/schedule.ts",
 		"./typings/tsd.d.ts"
 	]
