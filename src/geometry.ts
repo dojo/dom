@@ -8,8 +8,8 @@ function pxToNumber(value: string): number {
 /**
  * Given a number, returns a CSS px value (e.g. '10px')
  */
-function numberToPx(value: num): string {
-	return num + 'px';
+function numberToPx(value: number): string {
+	return value + 'px';
 }
 
 /**
@@ -95,20 +95,40 @@ export function getPaddingBox(element: Element): ClientRect {
 /**
  * Sets the dimensions of an Element's border box.
  * @param element The Element to modify
- * @param rect The Element to modify
+ * @param rect An object containing optional number properties for height, left, top, and width
  */
 export function setBorderBox(element: HTMLElement, rect: SettableClientRect): void {
 	const style = getComputedStyle(element);
 	const borderBox = style.boxSizing && style.boxSizing === 'border-box';
 
 	if (rect.height) {
-		element.style.height = numberToPx(borderBox ? rect.height :
-			rect.height - (2 * pxToNumber(style.paddingTop)) - (2 * pxToNumber(style.borderTopWidth)));
+		let height = 0;
+		if (borderBox) {
+			height = rect.height;
+		}
+		else {
+			height = rect.height
+				- pxToNumber(style.paddingTop)
+				- pxToNumber(style.paddingBottom)
+				- pxToNumber(style.borderTopWidth)
+				- pxToNumber(style.borderBottomWidth);
+		}
+		element.style.height = numberToPx(height);
 	}
 
 	if (rect.width) {
-		element.style.width = numberToPx(borderBox ? rect.width :
-			rect.width - (2 * pxToNumber(style.paddingLeft)) - (2 * pxToNumber(style.borderLeftWidth)));
+		let width = 0;
+		if (borderBox) {
+			width = rect.width;
+		}
+		else {
+			width = rect.width
+				- pxToNumber(style.paddingLeft)
+				- pxToNumber(style.paddingRight)
+				- pxToNumber(style.borderLeftWidth)
+				- pxToNumber(style.borderRightWidth);
+		}
+		element.style.width = numberToPx(width);
 	}
 
 	if (rect.top) {
@@ -130,20 +150,155 @@ export function setContentBox(element: HTMLElement, rect: SettableClientRect): v
 	const borderBox = style.boxSizing && style.boxSizing === 'border-box';
 
 	if (rect.height) {
-		element.style.height = numberToPx(!borderBox ? rect.height :
-			rect.height - (2 * pxToNumber(style.paddingTop)) - (2 * pxToNumber(style.borderTopWidth)));
+		let height = 0;
+		if (borderBox) {
+			height = rect.height
+			+ pxToNumber(style.paddingTop)
+			+ pxToNumber(style.paddingBottom)
+			+ pxToNumber(style.borderTopWidth)
+			+ pxToNumber(style.borderBottomWidth);
+			
+		}
+		else {
+			height = rect.height;
+		}
+		element.style.height = numberToPx(height);
 	}
 
 	if (rect.width) {
-		element.style.width = numberToPx(!borderBox ? rect.width :
-			rect.width - (2 * pxToNumber(style.paddingLeft)) - (2 * pxToNumber(style.borderLeftWidth)));
+		let width = 0;
+		if (borderBox) {
+			width = rect.width
+			+ pxToNumber(style.paddingLeft)
+			+ pxToNumber(style.paddingRight)
+			+ pxToNumber(style.borderLeftWidth)
+			+ pxToNumber(style.borderRightWidth);
+		}
+		else {
+			width = rect.width;
+		}
+		element.style.width = numberToPx(width);
 	}
 
 	if (rect.top) {
-		element.style.top = numberToPx(rect.top - pxToNumber(style.marginTop) - pxToNumber(style.borderLeftWidth) - pxToNumber(style.paddingTop));
+		element.style.top = numberToPx(rect.top
+			- pxToNumber(style.marginTop)
+			- pxToNumber(style.borderTopWidth)
+			- pxToNumber(style.paddingTop));
 	}
 
 	if (rect.left) {
-		element.style.left = numberToPx(rect.left - pxToNumber(style.marginLeft) - pxToNumber(style.borderLeftWidth) - pxToNumber(style.paddingLeft));
+		element.style.left = numberToPx(rect.left
+			- pxToNumber(style.marginLeft)
+			- pxToNumber(style.borderLeftWidth)
+			- pxToNumber(style.paddingLeft));
+	}
+}
+
+/**
+ * Sets the dimensions of an Element's margin box.
+ * @param element The Element to modify
+ * @param rect An object containing optional number properties for height, left, top, and width
+ */
+export function setMarginBox(element: HTMLElement, rect: SettableClientRect): void {
+	const style = getComputedStyle(element);
+	const borderBox = style.boxSizing && style.boxSizing === 'border-box';
+
+	if (rect.height) {
+		let height = 0;
+		if (borderBox) {
+			height = rect.height
+				- pxToNumber(style.marginTop)
+				- pxToNumber(style.marginBottom);
+		}
+		else {
+			height = rect.height
+				- pxToNumber(style.marginTop)
+				- pxToNumber(style.marginBottom)
+				- pxToNumber(style.paddingTop)
+				- pxToNumber(style.paddingBottom)
+				- pxToNumber(style.borderTopWidth)
+				- pxToNumber(style.borderBottomWidth);
+		}
+		element.style.height = numberToPx(height);
+	}
+
+	if (rect.width) {
+		let width = 0;
+		if (borderBox) {
+			width = rect.width
+				- pxToNumber(style.marginLeft)
+				- pxToNumber(style.marginRight);
+		}
+		else {
+			width = rect.width
+				- pxToNumber(style.marginLeft)
+				- pxToNumber(style.marginRight)
+				- pxToNumber(style.paddingLeft)
+				- pxToNumber(style.paddingRight)
+				- pxToNumber(style.borderLeftWidth)
+				- pxToNumber(style.borderRightWidth);
+		}
+		element.style.width = numberToPx(width);
+	}
+
+	if (rect.top) {
+		element.style.top = numberToPx(rect.top);
+	}
+
+	if (rect.left) {
+		element.style.left = numberToPx(rect.left);
+	}
+}
+
+/**
+ * Sets the dimensions of an Element's margin box.
+ * @param element The Element to modify
+ * @param rect An object containing optional number properties for height, left, top, and width
+ */
+export function setPaddingBox(element: HTMLElement, rect: SettableClientRect): void {
+	const style = getComputedStyle(element);
+	const borderBox = style.boxSizing && style.boxSizing === 'border-box';
+
+	if (rect.height) {
+		let height = 0;
+		if (borderBox) {
+			height = rect.height
+				+ pxToNumber(style.borderTopWidth)
+				+ pxToNumber(style.borderBottomWidth);
+		}
+		else {
+			height = rect.height
+				- pxToNumber(style.paddingTop)
+				- pxToNumber(style.paddingBottom);
+		}
+		element.style.height = numberToPx(height);
+	}
+
+	if (rect.width) {
+		let width = 0;
+		if (borderBox) {
+			width = rect.width
+				+ pxToNumber(style.borderTopWidth)
+				+ pxToNumber(style.borderBottomWidth);
+		}
+		else {
+			width = rect.width
+				- pxToNumber(style.paddingLeft)
+				- pxToNumber(style.paddingRight);
+		}
+		element.style.width = numberToPx(width);
+	}
+
+	if (rect.top) {
+		element.style.top = numberToPx(rect.top
+			- pxToNumber(style.marginTop)
+			- pxToNumber(style.borderTopWidth));
+	}
+
+	if (rect.left) {
+		element.style.left = numberToPx(rect.left
+			- pxToNumber(style.marginLeft)
+			- pxToNumber(style.borderLeftWidth));
 	}
 }
