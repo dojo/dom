@@ -37,8 +37,8 @@
 		"./tests/unit/all.ts",
 		"./tests/unit/dom.ts",
 		"./tests/unit/form.ts",
-		"./tests/unit/schedule.ts",
 		"./tests/unit/geometry.ts",
+		"./tests/unit/schedule.ts",
 		"./typings/tsd.d.ts"
 	]
 }
