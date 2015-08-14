@@ -28,12 +28,13 @@ export default function delegate(target: HTMLElement, selector: string, type: st
 export default function delegate(target: HTMLElement, selector: string, type: string[], listener: (event: UIEvent) => void): Handle;
 export default function delegate(target: HTMLElement, selector: string, type: any, listener: (event: UIEvent) => void): Handle {
 	function matches(element: HTMLElement, selector: string) {
-		// Search in parents of the given element as well,
+		// Search in ancestors of the given element as well,
 		// since the event could have bubbled into an element matching the selector
+		// Once the target is reached, stop going up the ancestor chain (for performance)
 
 		// TS7017
 		while (!(<any> element)[matchesMethod](selector)) {
-			if (!element.parentNode || !(<any> element.parentNode)[matchesMethod]) {
+			if (!element.parentNode || !(<any> element.parentNode)[matchesMethod] || element === target) {
 				return null;
 			}
 			element = <HTMLElement> element.parentNode;
