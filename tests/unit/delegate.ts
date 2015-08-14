@@ -139,6 +139,22 @@ registerSuite({
 		assert.strictEqual(called, 0);
 	},
 
+	'CSS selector must not match ancestors of delegated target'() {
+		let called = 0;
+		let parent = document.createElement('span');
+		let child = document.createElement('button');
+
+		handles.push(delegate(parent, 'div', 'click', function () {
+			called++;
+		}));
+
+		parent.appendChild(child);
+		container.appendChild(parent);
+
+		child.click();
+		assert.strictEqual(called, 0);
+	},
+
 	'Comma-separated selector handling'() {
 		let called = 0;
 		let buttonOne = document.createElement('button');
