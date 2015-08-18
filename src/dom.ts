@@ -139,7 +139,7 @@ export let create: CreateFunction = function (
 		}
 	}
 	return element;
-}
+};
 
 // Tag trees for element creation, used by fromString
 const tagWrap: {[key: string]: any} = {

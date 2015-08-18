@@ -465,7 +465,7 @@ registerSuite({
 			assert.strictEqual(result.nodeName, '#document-fragment');
 			assert.strictEqual(result.firstChild.nodeName, '#text');
 			assert.strictEqual(result.firstChild.nodeValue, text);
-		}
+		};
 
 		return tests;
 	})(),

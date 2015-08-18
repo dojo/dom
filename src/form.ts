@@ -140,7 +140,6 @@ function storeFieldValue(object: FormValue, element: HTMLInputElement) {
 	}
 
 	const name = element.name;
-	const current = object[name];
 
 	// Determine whether value needs to be an array based on whether the field
 	// can potentially accommodate multiple values.

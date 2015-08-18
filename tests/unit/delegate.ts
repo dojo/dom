@@ -3,7 +3,6 @@ import assert = require('intern/chai!assert');
 import { emit } from 'dojo-core/on';
 import { Handle } from 'dojo-core/interfaces';
 import delegate from 'src/delegate';
-import * as dom from 'src/dom';
 
 let container = document.createElement('div');
 let handles: Handle[] = [];
