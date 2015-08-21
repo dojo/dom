@@ -122,12 +122,12 @@ registerSuite({
 		assert.strictEqual(called, 0);
 	},
 
-	'CSS selector should only match descendants of delegated target'() {
+	'CSS selector must not match ancestors of delegated target'() {
 		let called = 0;
 		let parent = document.createElement('span');
 		let child = document.createElement('button');
 
-		handles.push(delegate(parent, 'div button', 'click', function () {
+		handles.push(delegate(parent, 'div', 'click', function () {
 			called++;
 		}));
 
@@ -138,12 +138,15 @@ registerSuite({
 		assert.strictEqual(called, 0);
 	},
 
-	'CSS selector must not match ancestors of delegated target'() {
+	'CSS selector should only match descendants of delegated target'() {
 		let called = 0;
 		let parent = document.createElement('span');
 		let child = document.createElement('button');
 
-		handles.push(delegate(parent, 'div', 'click', function () {
+		handles.push(delegate(parent, 'div button', 'click', function () {
+			called++;
+		}));
+		handles.push(delegate(parent, 'span button', 'click', function () {
 			called++;
 		}));
 
