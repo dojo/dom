@@ -6,9 +6,6 @@ add('dom-element-matches', function () {
 	if (typeof (<any> node).matches === 'function') {
 		return 'matches';
 	}
-	if (typeof node.webkitMatchesSelector === 'function') {
-		return 'webkitMatchesSelector';
-	}
 	if (typeof node.msMatchesSelector === 'function') {
 		return 'msMatchesSelector';
 	}
