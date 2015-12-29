@@ -6,10 +6,8 @@
 		"noImplicitAny": true,
 		"outDir": "_build/",
 		"removeComments": false,
+		"sourceMap": true,
 		"target": "es5",
-		"experimentalDecorators": true,
-		"inlineSources": false,
-		"inlineSourceMap": false,
 		"moduleResolution": "classic"
 	},
 	"filesGlob": [
