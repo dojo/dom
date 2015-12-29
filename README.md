@@ -1,5 +1,9 @@
 # dojo-dom
 
+[![Build Status](https://travis-ci.org/dojo/dom.svg?branch=master)](https://travis-ci.org/dojo/dom)
+[![codecov.io](http://codecov.io/github/dojo/dom/coverage.svg?branch=master)](http://codecov.io/github/dojo/dom?branch=master)
+
+
 The dom package provides utilities for DOM manipulation and event handling/delegation in browser runtimes.
 It encourages (and shims) standard DOM methods where possible, but also provides utilities to make
 common and recommended use cases easy and obvious, and harder use cases less painful.

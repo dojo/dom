@@ -210,7 +210,7 @@ export function fromString(html: string): DocumentFragment {
 	if (match && tagWrap[tag]) {
 		let wrap = tagWrap[tag];
 		master.innerHTML = wrap.pre + html + wrap.post;
-		for (let i = wrap.length; i--;) {
+		for (let i = wrap.length; i--; ) {
 			master = <HTMLElement> master.firstChild;
 		}
 	}
