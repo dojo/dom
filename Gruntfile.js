@@ -1,8 +1,11 @@
 /* jshint node:true */
 
-function mixin(destination, source) {
-	for (var key in source) {
-		destination[key] = source[key];
+function mixin(destination) {
+	for (var i = 1; i < arguments.length; i++) {
+		var source = arguments[i];
+		for (var key in source) {
+			destination[key] = source[key];
+		}
 	}
 	return destination;
 }
@@ -11,15 +14,20 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-contrib-clean');
 	grunt.loadNpmTasks('grunt-contrib-copy');
 	grunt.loadNpmTasks('grunt-contrib-watch');
-	grunt.loadNpmTasks('grunt-text-replace');
 	grunt.loadNpmTasks('grunt-ts');
 	grunt.loadNpmTasks('grunt-tslint');
 	grunt.loadNpmTasks('dts-generator');
 	grunt.loadNpmTasks('intern');
+	grunt.loadNpmTasks('remap-istanbul');
+
+	grunt.loadTasks('tasks');
 
 	var tsconfigContent = grunt.file.read('tsconfig.json');
 	var tsconfig = JSON.parse(tsconfigContent);
-	var compilerOptions = mixin({}, tsconfig.compilerOptions);
+	var tsOptions = mixin({}, tsconfig.compilerOptions, {
+		failOnTypeErrors: true,
+		fast: 'never'
+	});
 	tsconfig.filesGlob = tsconfig.filesGlob.map(function (glob) {
 		if (/^\.\//.test(glob)) {
 			// Remove the leading './' from the glob because grunt-ts
@@ -35,8 +43,10 @@ module.exports = function (grunt) {
 		name: packageJson.name,
 		version: packageJson.version,
 		tsconfig: tsconfig,
+		tsconfigContent: tsconfigContent,
 		all: [ '<%= tsconfig.filesGlob %>' ],
 		skipTests: [ '<%= all %>' , '!tests/**/*.ts' ],
+		staticTestFiles: [ 'tests/**/*.{html,css,json,xml}' ],
 		devDirectory: '<%= tsconfig.compilerOptions.outDir %>',
 		istanbulIgnoreNext: '/* istanbul ignore next */',
 
@@ -59,8 +69,11 @@ module.exports = function (grunt) {
 					return false;
 				}
 			},
+			report: {
+				src: [ 'html-report/', 'coverage-final.json' ]
+			},
 			coverage: {
-				src: [ 'coverage-final.json', 'html-report/' ]
+				src: [ 'coverage-unmapped.json' ]
 			}
 		},
 
@@ -70,6 +83,12 @@ module.exports = function (grunt) {
 				cwd: '.',
 				src: [ 'README.md', 'LICENSE', 'package.json', 'bower.json' ],
 				dest: 'dist/'
+			},
+			staticTestFiles: {
+				expand: true,
+				cwd: '.',
+				src: [ '<%= staticTestFiles %>' ],
+				dest: '<%= devDirectory %>'
 			},
 			typings: {
 				expand: true,
@@ -94,25 +113,19 @@ module.exports = function (grunt) {
 
 		intern: {
 			options: {
-				grep: grunt.option('grep') || '.*',
 				runType: 'runner',
-				config: '<%= devDirectory %>/tests/intern'
+				config: '<%= devDirectory %>/tests/intern',
+				reporters: [ 'Runner' ]
 			},
-			runner: {
-				options: {
-					reporters: [ 'runner', 'lcovhtml' ]
-				}
-			},
+			remote: {},
 			local: {
 				options: {
-					config: '<%= devDirectory %>/tests/intern-local',
-					reporters: [ 'runner', 'lcovhtml' ]
+					config: '<%= devDirectory %>/tests/intern-local'
 				}
 			},
-			client: {
+			node: {
 				options: {
-					runType: 'client',
-					reporters: [ 'console', 'lcovhtml' ]
+					runType: 'client'
 				}
 			},
 			proxy: {
@@ -137,38 +150,16 @@ module.exports = function (grunt) {
 			}
 		},
 
-		replace: {
-			addIstanbulIgnore: {
-				src: [ '<%= devDirectory %>/**/*.js' ],
-				overwrite: true,
-				replacements: [
-					{
-						from: /^(var __(?:extends|decorate|param) = )/gm,
-						to: '$1<%= istanbulIgnoreNext %> '
-					},
-					{
-						from: /^(\()(function \(deps, )/m,
-						to: '$1<%= istanbulIgnoreNext %> $2'
-					}
-				]
-			}
-		},
-
 		ts: {
-			options: mixin(
-				compilerOptions,
-				{
-					failOnTypeErrors: true,
-					fast: 'never'
-				}
-			),
+			options: tsOptions,
 			dev: {
 				outDir: '<%= devDirectory %>',
 				src: [ '<%= all %>' ]
 			},
 			dist: {
 				options: {
-					mapRoot: '../dist/_debug'
+					inlineSourceMap: false,
+					inlineSources: true
 				},
 				outDir: 'dist',
 				src: [ '<%= skipTests %>' ]
@@ -199,56 +190,81 @@ module.exports = function (grunt) {
 				options: {
 					atBegin: true
 				},
-				files: [ '<%= all %>' ],
+				files: [ '<%= all %>', '<%= staticTestFiles %>' ],
 				tasks: [
 					'dev'
 				]
 			}
-		}
-	});
+		},
 
-	grunt.registerMultiTask('rewriteSourceMaps', function () {
-		this.filesSrc.forEach(function (file) {
-			var map = JSON.parse(grunt.file.read(file));
-			var sourcesContent = map.sourcesContent = [];
-			var path = require('path');
-			map.sources = map.sources.map(function (source, index) {
-				sourcesContent[index] = grunt.file.read(path.resolve(path.dirname(file), source));
-				return source.replace(/^.*\/src\//, '');
-			});
-			grunt.file.write(file, JSON.stringify(map));
-		});
-		grunt.log.writeln('Rewrote ' + this.filesSrc.length + ' source maps');
-	});
-
-	grunt.registerMultiTask('rename', function () {
-		this.files.forEach(function (file) {
-			if (grunt.file.isFile(file.src[0])) {
-				grunt.file.mkdir(require('path').dirname(file.dest));
+		remapIstanbul: {
+			coverage: {
+				options: {
+					reports: {
+						'html': 'html-report',
+						'text': null
+					}
+				},
+				src: [ 'coverage-unmapped.json' ]
+			},
+			ci: {
+				options: {
+					reports: {
+						'lcovonly': 'coverage-final.lcov',
+						'text': null
+					}
+				},
+				src: [ 'coverage-unmapped.json' ]
 			}
-			require('fs').renameSync(file.src[0], file.dest);
-			grunt.verbose.writeln('Renamed ' + file.src[0] + ' to ' + file.dest);
-		});
-		grunt.log.writeln('Moved ' + this.files.length + ' files');
+		}
 	});
 
-	grunt.registerTask('updateTsconfig', function () {
-		var tsconfig = JSON.parse(tsconfigContent);
-		tsconfig.files = grunt.file.expand(tsconfig.filesGlob);
-
-		var output = JSON.stringify(tsconfig, null, '\t') + require('os').EOL;
-		if (output !== tsconfigContent) {
-			grunt.file.write('tsconfig.json', output);
-			tsconfigContent = output;
+	// Set some Intern-specific options if specified on the command line.
+	[ 'suites', 'functionalSuites', 'grep' ].forEach(function (option) {
+		var value = grunt.option(option);
+		if (value) {
+			if (option !== 'grep') {
+				value = value.split(',').map(function (string) { return string.trim(); });
+			}
+			grunt.config('intern.options.' + option, value);
 		}
+	});
+
+	function setCombined(combined) {
+		if (combined) {
+			grunt.config('intern.options.reporters', [
+				{ id: 'tests/support/Reporter', file: 'coverage-unmapped.json' }
+			]);
+		}
+	}
+	setCombined(grunt.option('combined'));
+
+	grunt.registerTask('test', function () {
+		var flags = Object.keys(this.flags);
+
+		if (!flags.length) {
+			flags.push('node');
+		}
+
+		grunt.option('force', true);
+		grunt.task.run('clean:coverage');
+		grunt.task.run('dev');
+		setCombined(true);
+		flags.forEach(function (flag) {
+			grunt.task.run('intern:' + flag);
+		});
+		grunt.task.run('remapIstanbul:coverage');
+		grunt.task.run('clean:coverage');
 	});
 
 	grunt.registerTask('dev', [
+		'tslint',
 		'ts:dev',
-		'replace:addIstanbulIgnore',
+		'copy:staticTestFiles',
 		'updateTsconfig'
 	]);
 	grunt.registerTask('dist', [
+		'tslint',
 		'ts:dist',
 		'rename:sourceMaps',
 		'rewriteSourceMaps',
@@ -256,10 +272,6 @@ module.exports = function (grunt) {
 		'copy:staticFiles',
 		'dtsGenerator:dist'
 	]);
-	grunt.registerTask('test', [ 'dev', 'intern:client' ]);
-	grunt.registerTask('test-runner', [ 'dev', 'intern:runner' ]);
-	grunt.registerTask('test-local', [ 'dev', 'intern:local' ]);
 	grunt.registerTask('test-proxy', [ 'dev', 'intern:proxy' ]);
-	grunt.registerTask('ci', [ 'tslint', 'test' ]);
 	grunt.registerTask('default', [ 'clean', 'dev' ]);
 };
