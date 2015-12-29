@@ -20,9 +20,9 @@ export var capabilities = {
 // capabilities options specified for an environment will be copied as-is
 export const environments = [
 	{ browserName: 'internet explorer', version: [ '9', '10', '11' ], platform: 'WINDOWS' },
-	{ browserName: 'firefox', os: 'WINDOWS' },
-	{ browserName: 'chrome', os: 'WINDOWS' },
-	{ browserName: 'Safari', version: '9', os: 'OS X' }
+	{ browserName: 'firefox', platform: 'WINDOWS' },
+	{ browserName: 'chrome', platform: 'WINDOWS' },
+	{ browserName: 'Safari', version: '9', platform: 'OS X' }
 ];
 
 // Maximum number of simultaneous integration tests that should be executed on the remote WebDriver service
