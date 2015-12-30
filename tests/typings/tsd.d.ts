@@ -34,7 +34,7 @@ declare module 'intern/lib/reporters/Combined' {
 	export = Combined;
 }
 
-declare module 'intern/dojo/node!istanbul/lib/collector' {
+declare module 'istanbul/lib/collector' {
 	class Collector {
 		add(coverage: any): void;
 		files(): string[];
@@ -43,8 +43,8 @@ declare module 'intern/dojo/node!istanbul/lib/collector' {
 	export = Collector;
 }
 
-declare module 'intern/dojo/node!istanbul/lib/report/json' {
-	import Collector = require('intern/dojo/node!istanbul/lib/collector');
+declare module 'istanbul/lib/report/json' {
+	import Collector = require('istanbul/lib/collector');
 	class JsonReporter {
 		constructor(options: any);
 
@@ -53,7 +53,7 @@ declare module 'intern/dojo/node!istanbul/lib/report/json' {
 	export = JsonReporter;
 }
 
-declare module 'intern/dojo/node!istanbul/lib/instrumenter' {
+declare module 'istanbul/lib/instrumenter' {
 	class Instrumenter {
 		constructor(options?: any);
 
@@ -63,12 +63,12 @@ declare module 'intern/dojo/node!istanbul/lib/instrumenter' {
 	export = Instrumenter;
 }
 
-declare module 'intern/dojo/node!istanbul/index' {
+declare module 'istanbul/index' {
 	let result: any;
 	export = result;
 }
 
-declare module 'intern/dojo/node!glob' {
+declare module 'glob' {
 	const glob: {
 		(pattern: string, callback: (err: Error, matches: string[]) => void): void;
 		(pattern: string, options: any, callback: (err: Error, matches: string[]) => void): void;
@@ -96,19 +96,4 @@ declare module 'charm' {
 		}
 	}
 	export = charm;
-}
-
-declare module 'intern/dojo/node!fs' {
-	import * as fs from 'fs';
-	export = fs;
-}
-
-declare module 'intern/dojo/node!util' {
-	import * as util from 'util';
-	export = util;
-}
-
-declare module 'intern/dojo/node!path' {
-	import * as path from 'path';
-	export = path;
 }
