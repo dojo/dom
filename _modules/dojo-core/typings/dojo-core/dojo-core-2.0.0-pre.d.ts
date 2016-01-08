@@ -1,3 +1,5 @@
+/// <reference path="../../../../tests/typings/node/node" />
+
 declare module 'dojo-core/interfaces' {
 	export interface EventObject {
 	    type: string;

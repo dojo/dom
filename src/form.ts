@@ -6,7 +6,7 @@ const EXCLUDED_TAGS = {
 	'button': true
 };
 
-type FormValue = { [ key: string ]: any };
+export type FormValue = { [ key: string ]: any };
 
 /**
  * Returns the index of the first enabled option in the select element.
