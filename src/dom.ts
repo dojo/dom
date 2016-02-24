@@ -117,7 +117,7 @@ export function contains(parent: Element, node: Node): boolean {
 
 export let create: CreateFunction = function (
 		tagName: string, kwArgs?: CreateArgs, children?: (Node | string)[]): HTMLElement {
-	var element = document.createElement(tagName);
+	const element = document.createElement(tagName);
 	if (children) {
 		for (let child of children) {
 			if (typeof child === 'string') {

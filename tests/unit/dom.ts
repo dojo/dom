@@ -163,7 +163,7 @@ registerSuite({
 		'children are added before properties are set'() {
 			let selectArgs: CreateArgs = { value: 'bar' };
 
-			var select = dom.create('select', selectArgs, [
+			const select = dom.create('select', selectArgs, [
 				dom.create('option', { value: 'foo' }, [ 'foo' ]),
 				dom.create('option', { value: 'bar' }, [ 'bar' ])
 			]);
@@ -416,7 +416,7 @@ registerSuite({
 			};
 		}
 
-		var tests: any = {
+		const tests: any = {
 			'returns document fragment for single node'() {
 				let result = dom.fromString('<div></div>');
 				assert.strictEqual(result.firstChild.nodeName, 'DIV');
@@ -523,12 +523,13 @@ registerSuite({
 				let reference = document.createElement('div');
 
 				// TS4091
-				for (var position of [ dom.Position.After, dom.Position.Before, dom.Position.Replace ]) {
+				let position: dom.Position;
+				for (position of [ dom.Position.After, dom.Position.Before, dom.Position.Replace ]) {
 					assert.throws(function () {
 						dom.place(node, position, reference);
 					}, ReferenceError);
 				}
-				for (var position of [ dom.Position.FirstIn, dom.Position.LastIn ]) {
+				for (position of [ dom.Position.FirstIn, dom.Position.LastIn ]) {
 					assert.doesNotThrow(function () {
 						dom.place(node, position, reference);
 					});
