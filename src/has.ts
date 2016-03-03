@@ -9,6 +9,9 @@ add('dom-element-matches', function () {
 	if (typeof node.msMatchesSelector === 'function') {
 		return 'msMatchesSelector';
 	}
+	if (typeof node.webkitMatchesSelector === 'function') {
+		return 'webkitMatchesSelector';
+	}
 });
 
 export { cache, add, default } from 'dojo-core/has';
