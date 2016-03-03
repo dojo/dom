@@ -170,6 +170,13 @@ registerSuite({
 			function runTest() {
 				const options = testForm['select'].options;
 
+				// Set multiple values
+				form.fromObject(testForm, { select: [ 'bar', 'baz' ] });
+				assert.isFalse(options[0].selected);
+				assert.isTrue(options[1].selected);
+				assert.isTrue(options[2].selected);
+				assert.isFalse(options[3].selected);
+
 				// Set single value
 				form.fromObject(testForm, { select: 'foo' });
 				assert.isTrue(options[0].selected);
@@ -177,12 +184,6 @@ registerSuite({
 				assert.isFalse(options[2].selected);
 				assert.isFalse(options[3].selected);
 
-				// Set multiple values
-				form.fromObject(testForm, { select: [ 'bar', 'baz' ] });
-				assert.isFalse(options[0].selected);
-				assert.isTrue(options[1].selected);
-				assert.isTrue(options[2].selected);
-				assert.isFalse(options[3].selected);
 			}
 
 			return {
