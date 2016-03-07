@@ -10,14 +10,16 @@ common and recommended use cases easy and obvious, and harder use cases less pai
 
 ## Features
 
-This section currently contains a limited high-level synopsis.  Further details will be added when APIs are implemented.
-
 ### DOM Manipulation
 
 * `dom.byId` - Retrieves an element by ID (shorthand for `document.getElementById`)
 * `dom.create` - Creates an element
 * `dom.fromString` - Creates an element or elements from a string of HTML
 * `dom.place` - Places a node relative to another element
+* `dom.contains` - Determines if an element contains a given node
+* `dom.remove` - Detaches a node from its parent
+* `dom.applyFeatureClass` - accepts any number of feature test names (registered with the `has` module), and adds
+corresponding classes to the document element.
 
 ### CSS Class Manipulation
 
@@ -32,20 +34,13 @@ when available, adding logic when necessary to comply with the more recent parts
 
 ### CSS Style Manipulation
 
-The dom package provides APIs for adding and removing styles *in a stylesheet*, rather than inline.  This allows
+The dom package provides the `addCssRule` function for adding styles *in a stylesheet*, rather than inline.  This allows
 styles to be added programmatically on a per-selector basis, which is often more flexible and efficient than
-setting styles directly inline on one element.
-
-* `dom.addStyleDeclaration` - Creates a `CSSStyleDeclaration`, adds it to a stylesheet in the page, and returns it
-* `dom.removeStyleDeclaration` - Removes a `CSSStyleDeclaration` that was created with `addStyleDeclaration`
+setting styles directly inline on one element. When used, `addCssRule` returns a handle that allows the rules for the provided selector to be manipulated.
 
 The dom package does *not* provide helpers for setting inline styles, as `element.style` generally accomplishes that,
 but moreover, inline styles should be discouraged as they override stylesheets and can be difficult to maintain.
 
-### CSS Class Application for Feature Tests
-
-`dom.applyFeatureClass` accepts any number of feature test names (registered with the `has` module), and adds
-corresponding classes to the document element.
 
 ### Form Manipulation
 
@@ -57,7 +52,23 @@ These APIs are implemented in a separate `dom/form` module.
 ### DOM Events
 
 The `dojo-core/on` module already contains basic support for registering and removing DOM event handlers.
-The dom package adds APIs for event delegation in the `delegate` module.
+The dom package adds APIs for event delegation in the `delegate` module. The `delegate` function allows an event
+handler to be attached to an element in order to respond to events raised by contained elements that match the provided
+selector.
+
+NOTE: `delegate` will only respond to events raised by contained elements. It will not respond to events raised by the container itself.
+
+
+### Batch Operations
+
+There are many times when a large number of operations need to be applied to the DOM at one time. In order to enable this to be done
+as efficiently as possible, the `schedule` module provides functionality to group the operations together.
+
+* `schedule.read` - Schedules a function that will retrieve information about the DOM's current state
+* `schedule.write` - Schedules a function that will update the state of the DOM
+
+NOTE: In order to be as flexible as possible, the `read` and `write` functions define very generic interfaces. In order
+to ensure that the operations are executed efficiently, it is important to use these functions only for their intended purpose.
 
 ## How do I use this package?
 
@@ -91,4 +102,3 @@ Test cases MUST be written using Intern using the Object test interface and Asse
 ## Licensing information
 
 © 2004–2015 Dojo Foundation & contributors. [New BSD](http://opensource.org/licenses/BSD-3-Clause) license.
-
