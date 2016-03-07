@@ -11,4 +11,8 @@ add('dom-element-matches', function () {
 	}
 });
 
+add('dom-contextual-fragment', function() {
+	return Boolean(Range && Range.prototype.createContextualFragment);
+});
+
 export { cache, add, default } from 'dojo-core/has';
