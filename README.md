@@ -12,14 +12,14 @@ common and recommended use cases easy and obvious, and harder use cases less pai
 
 ### DOM Manipulation
 
-* `dom.byId` - Retrieves an element by ID (shorthand for `document.getElementById`)
-* `dom.create` - Creates an element
-* `dom.fromString` - Creates an element or elements from a string of HTML
-* `dom.place` - Places a node relative to another element
-* `dom.contains` - Determines if an element contains a given node
-* `dom.remove` - Detaches a node from its parent
 * `dom.applyFeatureClass` - accepts any number of feature test names (registered with the `has` module), and adds
 corresponding classes to the document element.
+* `dom.byId` - Retrieves an element by ID (shorthand for `document.getElementById`)
+* `dom.contains` - Determines if an element contains a given node
+* `dom.create` - Creates an element
+* `dom.fromString` - Creates an element or elements from a string of HTML
+* `dom.remove` - Detaches a node from its parent
+* `dom.place` - Places a node relative to another element
 
 ### CSS Class Manipulation
 
@@ -46,8 +46,8 @@ but moreover, inline styles should be discouraged as they override stylesheets a
 
 These APIs are implemented in a separate `dom/form` module.
 
-* `form.toObject` - Serializes the values in a form into a JavaScript object
 * `form.fromObject` - Populates a DOM form's fields from a JavaScript object
+* `form.toObject` - Serializes the values in a form into a JavaScript object
 
 ### DOM Events
 
