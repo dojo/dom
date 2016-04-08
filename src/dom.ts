@@ -1,4 +1,4 @@
-import has from 'dojo-core/has';
+import has from './has';
 import { CreateArgs, CreateFunction } from './interfaces';
 
 /**
@@ -200,29 +200,56 @@ export function containsClass(element: HTMLElement, className: string): boolean 
  * @example
  * var fragment = dom.fromString('<tr>');
  */
-export function fromString(html: string): DocumentFragment {
-	html = String(html);
+export function fromString(html: string): DocumentFragment  {
+	let fragment: DocumentFragment;
+	const useContextualFragment = has('dom-contextual-fragment');
 
-	const match = html.match(/<\s*([\w\:]+)/);
-	const tag = match ? match[1].toLowerCase() : '';
 	let master: HTMLElement = document.createElement('div');
+	const match = String(html).match(/<\s*([\w\:]+)/);
+	const tag = match ? match[1].toLowerCase() : '';
 
-	if (match && tagWrap[tag]) {
-		let wrap = tagWrap[tag];
-		master.innerHTML = wrap.pre + html + wrap.post;
-		for (let i = wrap.length; i--; ) {
-			master = <HTMLElement> master.firstChild;
+	function unwrapElement(element: HTMLElement, levels: number): HTMLElement {
+		for (let i = 0; i < levels; i++) {
+			element = <HTMLElement> element.firstChild;
+		}
+
+		return element;
+	}
+
+	if (useContextualFragment) {
+		master.style.display = 'none';
+		document.body.appendChild(master);
+		const range = document.createRange();
+		range.selectNode(master);
+
+		if (match && tagWrap[tag]) {
+			const wrap = tagWrap[tag];
+			const wrappedHTML = wrap.pre + html + wrap.post;
+			fragment = range.createContextualFragment(wrappedHTML);
+			fragment = unwrapElement(<HTMLElement> fragment, wrap.length);
+		}
+		else {
+			fragment = range.createContextualFragment(html);
 		}
 	}
 	else {
-		master.innerHTML = html;
+		if (match && tagWrap[tag]) {
+			const wrap = tagWrap[tag];
+			const wrappedHTML = wrap.pre + html + wrap.post;
+			master.innerHTML = wrappedHTML;
+			master = unwrapElement(master, wrap.length);
+		}
+		else {
+			master.innerHTML = html;
+		}
+
+		fragment = document.createDocumentFragment();
+		let firstChild: Node;
+		while (firstChild = master.firstChild) {
+			fragment.appendChild(firstChild);
+		}
 	}
 
-	let fragment = document.createDocumentFragment();
-	let firstChild: Node;
-	while ((firstChild = master.firstChild)) {
-		fragment.appendChild(firstChild);
-	}
 	return fragment;
 }
 
