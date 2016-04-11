@@ -1,5 +1,5 @@
 {
-	"version": "1.7.0",
+	"version": "1.8.0",
 	"compilerOptions": {
 		"declaration": false,
 		"module": "umd",
@@ -26,6 +26,7 @@
 		"./src/schedule.ts",
 		"./tests/functional/all.ts",
 		"./tests/intern-local.ts",
+		"./tests/intern-saucelabs.ts",
 		"./tests/intern.ts",
 		"./tests/support/Reporter.ts",
 		"./tests/support/util.ts",

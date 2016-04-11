@@ -15,7 +15,7 @@ export type FormValue = { [ key: string ]: any };
 function findFirstEnabledIndex(select: HTMLSelectElement) {
 	const length = select.options.length;
 	for (let i = 0; i < length; i++) {
-		if (!select.options[i].disabled) {
+		if (!(<HTMLOptionElement> select.options[i]).disabled) {
 			return i;
 		}
 	}
@@ -62,7 +62,7 @@ export function fromObject(form: HTMLFormElement, object: FormValue): void {
 				if (name in object) {
 					const selectValue = Array.isArray(object[name]) ? object[name] : [ object[name] ];
 					for (let i = 0; i < multiSelectElement.options.length; i++) {
-						const option = multiSelectElement.options[i];
+						const option = multiSelectElement.options[i] as HTMLOptionElement;
 						option.selected = selectValue.indexOf(option.value) !== -1;
 					}
 				}
@@ -76,7 +76,7 @@ export function fromObject(form: HTMLFormElement, object: FormValue): void {
 				if (name in object) {
 					const selectValue = object[name];
 					for (let i = 0; i < selectElement.options.length; i++) {
-						const option = selectElement.options[i];
+						const option = selectElement.options[i] as HTMLOptionElement;
 						option.selected = selectValue === option.value;
 					}
 				}

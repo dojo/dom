@@ -19,6 +19,6 @@ install:
   - "travis_retry npm install"
 script:
   - "grunt"
-  - "grunt intern:remote --combined"
+  - "grunt intern:saucelabs --combined"
   - "grunt remapIstanbul:ci"
   - "grunt uploadCoverage"

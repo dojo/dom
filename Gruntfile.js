@@ -14,6 +14,8 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-contrib-clean');
 	grunt.loadNpmTasks('grunt-contrib-copy');
 	grunt.loadNpmTasks('grunt-contrib-watch');
+	grunt.loadNpmTasks('grunt-release');
+	grunt.loadNpmTasks('grunt-text-replace');
 	grunt.loadNpmTasks('grunt-ts');
 	grunt.loadNpmTasks('grunt-tslint');
 	grunt.loadNpmTasks('dts-generator');
@@ -38,15 +40,16 @@ module.exports = function (grunt) {
 		return glob;
 	});
 	var packageJson = grunt.file.readJSON('package.json');
+	var staticTestFiles = [ 'tests/**', '!tests/**/*.js*' ];
 
 	grunt.initConfig({
 		name: packageJson.name,
 		version: packageJson.version,
 		tsconfig: tsconfig,
 		tsconfigContent: tsconfigContent,
+		packageJson: packageJson,
 		all: [ '<%= tsconfig.filesGlob %>' ],
 		skipTests: [ '<%= all %>' , '!tests/**/*.ts' ],
-		staticTestFiles: [ 'tests/**/*.{html,css,json,xml}' ],
 		devDirectory: '<%= tsconfig.compilerOptions.outDir %>',
 		istanbulIgnoreNext: '/* istanbul ignore next */',
 
@@ -87,7 +90,7 @@ module.exports = function (grunt) {
 			staticTestFiles: {
 				expand: true,
 				cwd: '.',
-				src: [ '<%= staticTestFiles %>' ],
+				src: staticTestFiles,
 				dest: '<%= devDirectory %>'
 			},
 			typings: {
@@ -117,6 +120,12 @@ module.exports = function (grunt) {
 				config: '<%= devDirectory %>/tests/intern',
 				reporters: [ 'Runner' ]
 			},
+			browserstack: {},
+			saucelabs: {
+				options: {
+					config: '<%= devDirectory %>/tests/intern-saucelabs'
+				}
+			},
 			remote: {},
 			local: {
 				options: {
@@ -135,6 +144,21 @@ module.exports = function (grunt) {
 			}
 		},
 
+		release: {
+			options: {
+				// Update the bower.json version as well
+				additionalFiles: [ 'bower.json' ],
+				// Run tasks after the version has been updated in package.json and bower.json
+				afterBump: [ 'clean', 'dist' ],
+				// Publish the "dist/" directory to npm
+				folder: 'dist/',
+				commitMessage: 'Updating source version to <%= version %>',
+				tagMessage: 'Release <%= version %>',
+				// Update the `version` property on the `packageJson` object.
+				updateVars: [ packageJson ]
+			}
+		},
+
 		rename: {
 			sourceMaps: {
 				expand: true,
@@ -150,6 +174,23 @@ module.exports = function (grunt) {
 			}
 		},
 
+		replace: {
+			addIstanbulIgnore: {
+				src: [ '<%= devDirectory %>/**/*.js' ],
+				overwrite: true,
+				replacements: [
+					{
+						from: /^(var __(?:extends|decorate) = )/gm,
+						to: '$1<%= istanbulIgnoreNext %> '
+					},
+					{
+						from: /^(\()(function \(deps, )/m,
+						to: '$1<%= istanbulIgnoreNext %> $2'
+					}
+				]
+			}
+		},
+
 		ts: {
 			options: tsOptions,
 			dev: {
@@ -158,6 +199,8 @@ module.exports = function (grunt) {
 			},
 			dist: {
 				options: {
+					mapRoot: '../dist/_debug',
+					sourceMap: true,
 					inlineSourceMap: false,
 					inlineSources: true
 				},
@@ -190,7 +233,7 @@ module.exports = function (grunt) {
 				options: {
 					atBegin: true
 				},
-				files: [ '<%= all %>', '<%= staticTestFiles %>' ],
+				files: [ '<%= all %>' ].concat(staticTestFiles),
 				tasks: [
 					'dev'
 				]
@@ -261,6 +304,7 @@ module.exports = function (grunt) {
 		'tslint',
 		'ts:dev',
 		'copy:staticTestFiles',
+		'replace:addIstanbulIgnore',
 		'updateTsconfig'
 	]);
 	grunt.registerTask('dist', [
@@ -270,7 +314,8 @@ module.exports = function (grunt) {
 		'rewriteSourceMaps',
 		'copy:typings',
 		'copy:staticFiles',
-		'dtsGenerator:dist'
+		'dtsGenerator:dist',
+		'updatePackageJson'
 	]);
 	grunt.registerTask('test-proxy', [ 'dev', 'intern:proxy' ]);
 	grunt.registerTask('default', [ 'clean', 'dev' ]);

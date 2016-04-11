@@ -191,7 +191,7 @@ registerSuite({
 							resolve();
 						});
 					});
-				}),
+				})
 			]).then(function () {
 				assert.deepEqual(operations, [ 'write1', 'write2', 'read3', 'read4' ],
 					'Reads queued while draining write queue should not fire until next turn');
@@ -216,7 +216,7 @@ registerSuite({
 						operations.push('write');
 						resolve();
 					});
-				}),
+				})
 			]).then(function () {
 				assert.deepEqual(operations, [ 'read1', 'read2', 'write' ],
 					'Read queue should drain before write queue, even if more reads are queued while draining it');
