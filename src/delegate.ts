@@ -2,7 +2,7 @@ import { Handle } from 'dojo-core/interfaces';
 import on from 'dojo-core/on';
 import has from './has';
 
-const matchesMethod = has('dom-element-matches');
+const matchesMethod = has('dom-element-matches') as string;
 
 /**
  * Provides a normalized mechanism for using a single event handler to listen
