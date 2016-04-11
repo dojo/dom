@@ -26,6 +26,7 @@
 		"./src/schedule.ts",
 		"./tests/functional/all.ts",
 		"./tests/intern-local.ts",
+		"./tests/intern-saucelabs.ts",
 		"./tests/intern.ts",
 		"./tests/support/Reporter.ts",
 		"./tests/support/util.ts",
