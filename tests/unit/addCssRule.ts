@@ -9,7 +9,7 @@ registerSuite({
 		let handles: CssRuleHandle[] = [];
 		let node: HTMLElement;
 		let nodeStyle: CSSStyleDeclaration;
-		let initialSize: string;
+		let initialDisplay: string;
 		let initialStyle: string;
 
 		return {
@@ -18,7 +18,7 @@ registerSuite({
 				node.className = 'testDiv';
 				document.body.appendChild(node);
 				nodeStyle = window.getComputedStyle(node);
-				initialSize = nodeStyle.fontSize;
+				initialDisplay = nodeStyle.display;
 				initialStyle = nodeStyle.fontStyle;
 			},
 
@@ -42,27 +42,27 @@ registerSuite({
 				},
 
 				'multiple properties'() {
-					handles.push(addCssRule('.testDiv', 'font-size: 4px; font-style: italic;'));
-					assert.strictEqual(nodeStyle.fontSize, '4px');
+					handles.push(addCssRule('.testDiv', 'font-style: italic; display: inline'));
+					assert.strictEqual(nodeStyle.display, 'inline');
 					assert.strictEqual(nodeStyle.fontStyle, 'italic');
 				}
-			},
+			} ,
 
 			'add multiple rules'() {
-				const handle1 = addCssRule('.testDiv', 'font-size: 4px;');
+				const handle1 = addCssRule('.testDiv', 'display: inline;');
 				handles.push(handle1);
 				const handle2 = addCssRule('.testDiv', 'font-style: italic;');
 				handles.push(handle2);
 
-				assert.strictEqual(nodeStyle.fontSize, '4px');
+				assert.strictEqual(nodeStyle.display, 'inline');
 				assert.strictEqual(nodeStyle.fontStyle, 'italic');
 
 				handle1.destroy();
-				assert.strictEqual(nodeStyle.fontSize, initialSize);
+				assert.strictEqual(nodeStyle.display, initialDisplay);
 				assert.strictEqual(nodeStyle.fontStyle, 'italic');
 
 				handle2.destroy();
-				assert.strictEqual(nodeStyle.fontSize, initialSize);
+				assert.strictEqual(nodeStyle.display, initialDisplay);
 				assert.strictEqual(nodeStyle.fontStyle, initialStyle);
 			},
 
@@ -75,65 +75,65 @@ registerSuite({
 
 			'#destroy': {
 				'styles removed'() {
-					const handle = addCssRule('.testDiv', 'font-size: 4px;');
+					const handle = addCssRule('.testDiv', 'display: inline;');
 					handle.destroy();
 					// Verify that that styles were removed
-					assert.equal(nodeStyle.fontSize, initialSize);
+					assert.equal(nodeStyle.display, initialDisplay);
 				},
 
 				'use after destroy'() {
-					const handle = addCssRule('.testDiv', 'font-size: 4px;');
+					const handle = addCssRule('.testDiv', 'display: inline;');
 					handle.destroy();
 
 					assert.doesNotThrow(function () {
 						handle.destroy();
 					});
 
-					handle.set('font-size', '4px');
-					assert.strictEqual(nodeStyle.fontSize, initialSize,
-						'font-size style should not be applied after rule was destroyed');
-					assert.isNull(handle.get('font-size'),
+					handle.set('display', 'inline');
+					assert.strictEqual(nodeStyle.display, initialDisplay,
+						'display style should not be applied after rule was destroyed');
+					assert.isNull(handle.get('display'),
 						'get should always return null when called on a destroyed rule');
 
 					assert.doesNotThrow(function () {
-						handle.remove('font-size');
+						handle.remove('display');
 					});
 				},
 
 				'destroy out of order'() {
-					const handle1 = addCssRule('.testDiv', 'font-size: 4px;');
+					const handle1 = addCssRule('.testDiv', 'display: inline-block;');
 					handles.push(handle1);
-					const handle2 = addCssRule('.testDiv', 'font-size: 5px;');
+					const handle2 = addCssRule('.testDiv', 'display: table-cell;');
 					handles.push(handle2);
-					const handle3 = addCssRule('.testDiv', 'font-size: 6px;');
+					const handle3 = addCssRule('.testDiv', 'display: inline;');
 					handles.push(handle3);
 
-					assert.strictEqual(nodeStyle.fontSize, '6px');
+					assert.strictEqual(nodeStyle.display, 'inline');
 
 					handle1.destroy();
-					assert.strictEqual(nodeStyle.fontSize, '6px');
+					assert.strictEqual(nodeStyle.display, 'inline');
 					handle3.destroy();
-					assert.strictEqual(nodeStyle.fontSize, '5px');
+					assert.strictEqual(nodeStyle.display, 'table-cell');
 					handle2.destroy();
-					assert.strictEqual(nodeStyle.fontSize, initialSize);
+					assert.strictEqual(nodeStyle.display, initialDisplay);
 				}
 			},
 
 			'#get'() {
-				const handle = addCssRule('.testDiv', 'font-size: 4px; font-style: italic;');
+				const handle = addCssRule('.testDiv', 'display: inline; font-style: italic;');
 				handles.push(handle);
-				assert.strictEqual(handle.get('font-size'), '4px');
+				assert.strictEqual(handle.get('display'), 'inline');
 				assert.strictEqual(handle.get('font-style'), 'italic');
 
 			},
 
 			'#remove'() {
-				const handle = addCssRule('.testDiv', 'font-size: 4px; font-style: italic;');
+				const handle = addCssRule('.testDiv', 'display: inline; font-style: italic;');
 				handles.push(handle);
-				handle.remove('font-size');
+				handle.remove('display');
 
-				// Verify that that only font-size was removed
-				assert.strictEqual(nodeStyle.fontSize, initialSize);
+				// Verify that that only display was removed
+				assert.strictEqual(nodeStyle.display, initialDisplay);
 				assert.strictEqual(nodeStyle.fontStyle, 'italic');
 			},
 
@@ -141,26 +141,26 @@ registerSuite({
 				single() {
 					const handle = addCssRule('.testDiv', '');
 					handles.push(handle);
-					handle.set('font-size', '4px');
+					handle.set('display', 'inline');
 
 					// Check that property retrieval works
-					assert.strictEqual(handle.get('font-size'), '4px');
+					assert.strictEqual(handle.get('display'), 'inline');
 
 					// Verify that that the style is actually applied to the page
-					assert.strictEqual(nodeStyle.fontSize, '4px');
+					assert.strictEqual(nodeStyle.display, 'inline');
 				},
 
 				multiple() {
 					const handle = addCssRule('.testDiv', '');
 					handles.push(handle);
-					handle.set({ 'font-size': '4px', 'font-style': 'italic' });
+					handle.set({ 'display': 'inline', 'font-style': 'italic' });
 
 					// Check that property retrieval works
-					assert.strictEqual(handle.get('font-size'), '4px');
+					assert.strictEqual(handle.get('display'), 'inline');
 					assert.strictEqual(handle.get('font-style'), 'italic');
 
 					// Verify that that the style is actually applied to page
-					assert.strictEqual(nodeStyle.fontSize, '4px');
+					assert.strictEqual(nodeStyle.display, 'inline');
 					assert.strictEqual(nodeStyle.fontStyle, 'italic');
 				}
 			}
