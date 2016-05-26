@@ -18,4 +18,5 @@ add('dom-contextual-fragment', function() {
 	return Boolean(Range && Range.prototype.createContextualFragment);
 });
 
-export { cache, add, default } from 'dojo-core/has';
+export { default } from 'dojo-core/has';
+export * from 'dojo-core/has';
