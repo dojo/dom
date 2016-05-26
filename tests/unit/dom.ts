@@ -168,6 +168,10 @@ registerSuite({
 				dom.create('option', { value: 'bar' }, [ 'bar' ])
 			]);
 			assert.strictEqual(select.value, 'bar');
+		},
+		'created children that need to be created in a specific context'() {
+			const result = dom.create('td');
+			assert.strictEqual(result.outerHTML, '<td></td>');
 		}
 	},
 
