@@ -1,24 +1,24 @@
 sudo: false
 language: node_js
 node_js:
-  - "4.1"
+- '5.1'
 env:
   global:
-    # Sauce Labs are OK with this and it is currently necessary to expose this information for testing pull requests;
-    # please get your own free key if you want to test yourself
-    - SAUCE_USERNAME: dojo2-ts-ci
-    - SAUCE_ACCESS_KEY: e92610e3-834e-4bec-a3b5-6f7b9d874601
-    # Please get your own free key if you want to test yourself
-    - BROWSERSTACK_USERNAME: dtktestaccount1
-    - BROWSERSTACK_ACCESS_KEY: mG2qbEFJCZY2qLsM7yfx
+  - SAUCE_USERNAME: dojo2-ts-ci
+  - SAUCE_ACCESS_KEY: e92610e3-834e-4bec-a3b5-6f7b9d874601
+  - BROWSERSTACK_USERNAME: dtktestaccount1
+  - BROWSERSTACK_ACCESS_KEY: mG2qbEFJCZY2qLsM7yfx
 cache:
   directories:
-    - node_modules
+  - node_modules
 install:
-  - "travis_retry npm install grunt-cli"
-  - "travis_retry npm install"
+- travis_retry npm install grunt-cli dojo-core
+- travis_retry npm install
 script:
-  - "grunt"
-  - "grunt intern:saucelabs --combined"
-  - "grunt remapIstanbul:ci"
-  - "grunt uploadCoverage"
+- grunt
+- grunt intern:saucelabs --combined
+- grunt remapIstanbul:ci
+- grunt uploadCoverage
+notifications:
+  slack:
+    secure: OlHK5Ulgwan/uh6A4S4+Ex8oKORJ5fO6zbiQgwQNzTpfTglq5lwKgo110XmP4GSRNecFrVp5l6uCbxnX8RITO5Iki0ijjn1IIP0LADjvKsIpbIIcUJHQcWb3sPGP31Uuw6jdKkdG9F/WUDKPAiOUDLojL5p99wdQguAH/Yfgx2uxo7RoX0R8i69+M/IKEuz9jYn8LG5ZsKFHxPONsVPmVNXOThSgfkl/bGExHldV+z/5O5IKqOeGv3K2gD1SZN9qJs/lVA38rTMogyW4L0GUvSTpUGFuI2D9sB2ktQf2+s+QsugFiYgpYrvRiVCMNATah0yhwesaX+3xX4lUa+h873Mhw+Ii+uzicewDCfY9SZP+mZ2ct4YfwkvQxsn2LbL7lDUDK58NkHiQod0+RtQyFt4PXA8DIIhwcfrlvshhAGiQbnBmQvotxM0KpkBFQfq2SkBZY8vhkNQYTEj5U6MEOb3zjE4DhzN3ShpFSPhTENYbNdsUMzpEo/FNssjjCQf3vM+lq+5s7rTY5djQxi+GJqtlh5yf0uoPlsjwTk5e+8rCT+fp8qIoHocrP6zP9XLReMQnOes4im4Pzk9exfX6vnaIPQobDEykjyGIFdv6Y05A86CHdc4rcC7HC4EBTa6lAmqbayTng6nxYB+R0+M3mHBh0a5Zbh6igyFXVI5+sq0=
