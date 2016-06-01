@@ -19,7 +19,7 @@ export var capabilities = {
 // OnDemand. Options that will be permutated are browserName, version, platform, and platformVersion; any other
 // capabilities options specified for an environment will be copied as-is
 export const environments = [
-	{ browserName: 'internet explorer', version: ['9', '10', '11'], platform: 'WINDOWS' },
+	{ browserName: 'internet explorer', version: [ '10', '11' ], platform: 'WINDOWS' },
 	{ browserName: 'firefox', platform: 'WINDOWS' },
 	{ browserName: 'chrome', platform: 'WINDOWS' },
 	// { browserName: 'safari', version: '9', platform: 'MAC' },
@@ -35,7 +35,7 @@ export var tunnel = 'BrowserStackTunnel';
 // The desired AMD loader to use when running unit tests (client.html/client.js). Omit to use the default Dojo
 // loader
 export const loaders = {
-	'host-browser': 'node_modules/dojo-loader/loader.js',
+	'host-browser': 'node_modules/dojo-loader/dist/umd/loader.js',
 	'host-node': 'dojo-loader'
 };
 
@@ -44,7 +44,7 @@ export const loaders = {
 export var loaderOptions = {
 	// Packages that should be registered with the loader in each testing environment
 	packages: [
-		{ name: 'dojo-core', location: 'node_modules/dojo-core' },
+		{ name: 'dojo-core', location: 'node_modules/dojo-core/dist/umd' },
 		{ name: 'src', location: '_build/src' },
 		{ name: 'tests', location: '_build/tests' }
 	]
