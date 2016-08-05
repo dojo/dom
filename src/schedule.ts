@@ -7,7 +7,7 @@ let task: Handle | undefined;
 
 function createHandle(item: QueueItem): Handle {
 	return {
-		destroy() {
+		destroy(this: Handle) {
 			this.destroy = function () {};
 			item.isActive = false;
 			item.callback = null;

@@ -4,18 +4,18 @@ import { read, write } from 'src/schedule';
 import Promise from 'dojo-shim/Promise';
 
 registerSuite({
-	read() {
+	read(this: any) {
 		const dfd = this.async();
 		read(dfd.callback(function () {}));
 	},
 
-	write() {
+	write(this: any) {
 		const dfd = this.async();
 		write(dfd.callback(function () {}));
 	},
 
 	destroy: {
-		read() {
+		read(this: any) {
 			let didRead = false;
 			const handle = read(function () {
 				didRead = true;
@@ -28,7 +28,7 @@ registerSuite({
 			}), 100);
 		},
 
-		write() {
+		write(this: any) {
 			let didWrite = false;
 			const handle = read(function () {
 				didWrite = true;
