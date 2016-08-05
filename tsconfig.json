@@ -1,41 +1,30 @@
 {
-	"version": "1.8.0",
+	"version": "2.0.0",
 	"compilerOptions": {
 		"declaration": false,
 		"module": "umd",
 		"noImplicitAny": true,
 		"outDir": "_build/",
+		"baseUrl": "node_modules",
+		"paths": {
+			"dojo-has/*": [
+				"dojo-has/dist/umd/*"
+			],
+			"dojo-shim/*": [
+				"dojo-shim/dist/umd/*"
+			],
+			"dojo-core/*": [
+				"dojo-core/dist/umd/*"
+			]
+		},
 		"removeComments": false,
 		"sourceMap": true,
 		"target": "es5",
 		"moduleResolution": "classic"
 	},
-	"filesGlob": [
+	"include": [
 		"./src/**/*.ts",
 		"./tests/**/*.ts",
-		"./typings/index.d.ts"
-	],
-	"files": [
-		"./src/addCssRule.ts",
-		"./src/delegate.ts",
-		"./src/dom.ts",
-		"./src/form.ts",
-		"./src/has.ts",
-		"./src/interfaces.d.ts",
-		"./src/main.ts",
-		"./src/schedule.ts",
-		"./tests/functional/all.ts",
-		"./tests/intern-local.ts",
-		"./tests/intern-saucelabs.ts",
-		"./tests/intern.ts",
-		"./tests/support/Reporter.ts",
-		"./tests/support/util.ts",
-		"./tests/unit/addCssRule.ts",
-		"./tests/unit/all.ts",
-		"./tests/unit/delegate.ts",
-		"./tests/unit/dom.ts",
-		"./tests/unit/form.ts",
-		"./tests/unit/schedule.ts",
 		"./typings/index.d.ts"
 	]
 }

@@ -39,7 +39,7 @@
 		"intern": "~3.2.3",
 		"istanbul": "0.4.3",
 		"remap-istanbul": ">=0.6.4",
-		"tslint": "^3.10.2",
-		"typescript": "~1.8.10"
+		"tslint": "next",
+		"typescript": "beta"
 	}
 }
