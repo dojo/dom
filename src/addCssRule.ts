@@ -4,7 +4,7 @@ import { Handle } from 'dojo-core/interfaces';
 let extraSheet: CSSStyleSheet;
 
 // Array used to keep track of added rule indexes, used when rules are removed
-const ruleIndices: number[] = [];
+const ruleIndices: (number | undefined)[] = [];
 
 /**
  * A handle that can be used to update or remove a rule added by addCssRule.
@@ -31,7 +31,7 @@ namespace Impl {
 			});
 			Object.defineProperty(this, '_style', {
 				configurable: true,
-				value: (<CSSStyleRule> extraSheet.cssRules[ruleIndices[this._index]]).style
+				value: (<CSSStyleRule> extraSheet.cssRules[<number> ruleIndices[this._index]]).style
 			});
 		}
 
@@ -115,7 +115,7 @@ namespace Impl {
 					this._style.setProperty(name, property[name]);
 				}
 			}
-			else {
+			else if (value) {
 				this._style.setProperty(<string> property, value);
 			}
 		}

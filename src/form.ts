@@ -101,7 +101,7 @@ export function fromObject(form: HTMLFormElement, object: FormValue): void {
  */
 function getValue(element: HTMLInputElement): string | string[] {
 	const type = element.type;
-	let value: string | string[];
+	let value: string | string[] = element.value;
 
 	if (type === 'radio' || type === 'checkbox') {
 		if (element.checked) {
@@ -120,9 +120,6 @@ function getValue(element: HTMLInputElement): string | string[] {
 			}
 			value = values;
 		}
-	}
-	else {
-		value = element.value;
 	}
 
 	return value;

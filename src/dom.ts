@@ -70,7 +70,7 @@ export function applyFeatureClass(...features: string[]) {
  * @example
  * var element = dom.byId('anElement');
  */
-export function byId(id: string): HTMLElement {
+export function byId(id: string): HTMLElement | null {
 	return document.getElementById(id);
 }
 
@@ -129,8 +129,10 @@ export let create: CreateFunction = function (
 	if (kwArgs) {
 		for (let property in kwArgs) {
 			if (property === 'attributes') {
-				for (let attribute in kwArgs.attributes) {
-					element.setAttribute(attribute, kwArgs.attributes[attribute]);
+				if (kwArgs.attributes) {
+					for (let attribute in kwArgs.attributes) {
+						element.setAttribute(attribute, kwArgs.attributes[attribute]);
+					}
 				}
 			}
 			else {
@@ -175,7 +177,7 @@ for (const param in tagWrap) {
  * @example
  * var hasLoaded = dom.containsClass(document.body, 'loaded');
  */
-export function containsClass(element: HTMLElement, className: string): boolean {
+export function containsClass(element: HTMLElement, className: string): boolean | void {
 	let targetElement = <any> element;
 	if (!targetElement) {
 		return;
@@ -282,21 +284,20 @@ export function place(node: Node, position: Position, relativeElement: Element):
 		if (!parent) {
 			throw new ReferenceError('dom.place: Reference node must have a parent to determine placement');
 		}
-	}
-
-	if (position === Position.After) {
-		if (parent.lastChild === relativeElement) {
-			parent.appendChild(node);
+		if (position === Position.After) {
+			if (parent.lastChild === relativeElement) {
+				parent.appendChild(node);
+			}
+			else {
+				parent.insertBefore(node, relativeElement.nextSibling);
+			}
 		}
-		else {
-			parent.insertBefore(node, relativeElement.nextSibling);
+		else if (position === Position.Before) {
+			parent.insertBefore(node, relativeElement);
 		}
-	}
-	else if (position === Position.Before) {
-		parent.insertBefore(node, relativeElement);
-	}
-	else if (position === Position.Replace) {
-		parent.replaceChild(node, relativeElement);
+		else if (position === Position.Replace) {
+			parent.replaceChild(node, relativeElement);
+		}
 	}
 	else if (position === Position.FirstIn) {
 		relativeElement.insertBefore(node, relativeElement.firstChild);

@@ -76,7 +76,8 @@ registerSuite({
 		},
 
 		'result found'() {
-			assert.strictEqual(dom.byId('id').id, 'id');
+			const result = dom.byId('id');
+			assert.strictEqual(result && result.id, 'id');
 		},
 
 		'result not found'() {
@@ -122,7 +123,7 @@ registerSuite({
 			},
 
 			'null argument'() {
-				assert.isFalse(dom.contains(element, null),
+				assert.isFalse(dom.contains(element, <any> null),
 					'should return false (and not error) if 2nd argument is null');
 			}
 		};
@@ -144,7 +145,7 @@ registerSuite({
 		},
 
 		'string children are appended as Text nodes to element'() {
-			let element = dom.create('div', null, [ 'test1', 'test2' ]);
+			let element = dom.create('div', <any> null, [ 'test1', 'test2' ]);
 			assert.strictEqual(element.childNodes.length, 2);
 			assert.strictEqual(element.firstChild.nodeName, '#text');
 			assert.strictEqual(element.lastChild.nodeName, '#text');
@@ -153,7 +154,7 @@ registerSuite({
 		'children are appended to element'() {
 			let child1 = dom.create('div');
 			let child2 = dom.create('div');
-			let element = dom.create('div', null, [ child1, child2 ]);
+			let element = dom.create('div', <any> null, [ child1, child2 ]);
 
 			assert.strictEqual(element.children.length, 2);
 			assert.strictEqual(element.firstChild, child1);
@@ -199,7 +200,7 @@ registerSuite({
 
 			'null node should not throw'() {
 				assert.doesNotThrow(function () {
-					dom.addClass(null, 'test');
+					dom.addClass(<any> null, 'test');
 				});
 			},
 
@@ -214,7 +215,7 @@ registerSuite({
 
 			'null class should add "null" to className'() {
 				assert.doesNotThrow(function () {
-					dom.addClass(element, null);
+					dom.addClass(element, <any> null);
 					assert.include(element.className, 'null');
 				});
 			},
@@ -240,7 +241,7 @@ registerSuite({
 
 			'null node should not throw'() {
 				assert.doesNotThrow(function () {
-					dom.containsClass(null, 'test');
+					dom.containsClass(<any> null, 'test');
 				});
 			},
 
@@ -255,9 +256,9 @@ registerSuite({
 
 			'null class should check for "null" CSS class'() {
 				assert.doesNotThrow(function () {
-					assert.isFalse(dom.containsClass(element, null));
-					dom.addClass(element, null);
-					assert.isTrue(dom.containsClass(element, null));
+					assert.isFalse(dom.containsClass(element, <any> null));
+					dom.addClass(element, <any> null);
+					assert.isTrue(dom.containsClass(element, <any> null));
 				});
 			},
 
@@ -287,7 +288,7 @@ registerSuite({
 
 			'null node should not throw'() {
 				assert.doesNotThrow(function () {
-					dom.removeClass(null, 'test');
+					dom.removeClass(<any> null, 'test');
 				});
 			},
 
@@ -303,7 +304,7 @@ registerSuite({
 			'null class should remove "null" from className'() {
 				assert.doesNotThrow(function () {
 					element.className = 'null';
-					dom.removeClass(element, null);
+					dom.removeClass(element, <any> null);
 					assert.notInclude(element.className, 'null');
 				});
 			},
@@ -357,7 +358,7 @@ registerSuite({
 
 			'null node should not throw'() {
 				assert.doesNotThrow(function () {
-					dom.toggleClass(null, 'test');
+					dom.toggleClass(<any> null, 'test');
 				});
 			},
 
@@ -372,9 +373,9 @@ registerSuite({
 
 			'null class should toggle "null" on className'() {
 				assert.doesNotThrow(function () {
-					dom.toggleClass(element, null);
+					dom.toggleClass(element, <any> null);
 					assert.include(element.className, 'null');
-					dom.toggleClass(element, null);
+					dom.toggleClass(element, <any> null);
 					assert.notInclude(element.className, 'null');
 				});
 			}
