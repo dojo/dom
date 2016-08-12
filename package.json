@@ -18,9 +18,9 @@
 	},
 	"typings": "./dist/umd/dojo-dom.d.ts",
 	"peerDependencies": {
-		"dojo-core": ">=2.0.0-alpha.9",
+		"dojo-core": "next",
 		"dojo-has": "next",
-		"dojo-shim": ">=2.0.0-alpha.1"
+		"dojo-shim": "next"
 	},
 	"devDependencies": {
 		"codecov.io": "0.1.6",
