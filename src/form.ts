@@ -99,9 +99,9 @@ export function fromObject(form: HTMLFormElement, object: FormValue): void {
 /**
  * Gets the value of a form field.
  */
-function getValue(element: HTMLInputElement): string | string[] {
+function getValue(element: HTMLInputElement): string | string[] | undefined {
 	const type = element.type;
-	let value: string | string[] = element.value;
+	let value: string | string[] | undefined = undefined;
 
 	if (type === 'radio' || type === 'checkbox') {
 		if (element.checked) {
@@ -120,6 +120,9 @@ function getValue(element: HTMLInputElement): string | string[] {
 			}
 			value = values;
 		}
+	}
+	else {
+		value = element.value;
 	}
 
 	return value;
