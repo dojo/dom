@@ -3,22 +3,22 @@ import { queueAnimationTask, QueueItem } from 'dojo-core/queue';
 
 const readQueue: QueueItem[] = [];
 const writeQueue: QueueItem[] = [];
-let task: Handle;
+let task: Handle | undefined;
 
 function createHandle(item: QueueItem): Handle {
 	return {
-		destroy() {
+		destroy(this: Handle) {
 			this.destroy = function () {};
 			item.isActive = false;
-			item.callback = undefined;
+			item.callback = null;
 		}
 	};
 }
 
 function drain(queue: QueueItem[]) {
-	let item: QueueItem;
+	let item: QueueItem | undefined;
 	while (item = queue.shift()) {
-		if (item.isActive) {
+		if (item.isActive && item.callback) {
 			item.callback();
 		}
 	}

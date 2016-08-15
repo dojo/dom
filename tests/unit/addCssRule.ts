@@ -9,8 +9,8 @@ registerSuite({
 		let handles: CssRuleHandle[] = [];
 		let node: HTMLElement;
 		let nodeStyle: CSSStyleDeclaration;
-		let initialDisplay: string;
-		let initialStyle: string;
+		let initialDisplay: string | null;
+		let initialStyle: string | null;
 
 		return {
 			setup() {
@@ -24,7 +24,7 @@ registerSuite({
 
 			teardown() {
 				document.body.removeChild(node);
-				node = null;
+				node = <any> null;
 			},
 
 			afterEach() {

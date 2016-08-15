@@ -1,7 +1,7 @@
 sudo: false
 language: node_js
 node_js:
-- '6.1'
+- '6'
 env:
   global:
   - SAUCE_USERNAME: dojo2-ts-ci
@@ -12,7 +12,7 @@ cache:
   directories:
   - node_modules
 install:
-- "npm install grunt-cli $(node -e \"var deps = require('./package.json').peerDependencies; for(var name in deps) process.stdout.write(name + '@' + deps[name] + ' ');\")"
+- npm install grunt-cli
 - npm install
 script:
 - grunt

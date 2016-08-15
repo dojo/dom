@@ -65,7 +65,7 @@ export default function delegate(target: HTMLElement, selector: string, type: an
 			// Text nodes don't have .matches; other node types generally aren't applicable
 			eventTarget = eventTarget.parentNode;
 		}
-		let matchedEventTarget: HTMLElement;
+		let matchedEventTarget: HTMLElement | null = null;
 
 		try {
 			matchedEventTarget = matches(<HTMLElement> eventTarget, selectors.join(','));
