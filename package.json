@@ -18,9 +18,9 @@
 	},
 	"typings": "./dist/umd/dojo-dom.d.ts",
 	"peerDependencies": {
-		"dojo-core": "next",
-		"dojo-has": "next",
-		"dojo-shim": "next"
+		"dojo-core": ">=2.0.0-alpha.11",
+		"dojo-has": ">=2.0.0-alpha.3",
+		"dojo-shim": ">=2.0.0-alpha.3"
 	},
 	"devDependencies": {
 		"codecov.io": "0.1.6",
@@ -40,6 +40,6 @@
 		"istanbul": "0.4.3",
 		"remap-istanbul": ">=0.6.4",
 		"tslint": "next",
-		"typescript": "beta"
+		"typescript": "2.1.0-dev.20160819"
 	}
 }
