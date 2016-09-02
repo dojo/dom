@@ -44,9 +44,9 @@ export const loaders = {
 export var loaderOptions = {
 	// Packages that should be registered with the loader in each testing environment
 	packages: [
-		{ name: 'dojo-core', location: 'node_modules/dojo-core/dist/umd' },
-		{ name: 'dojo-has', location: 'node_modules/dojo-has/dist/umd' },
-		{ name: 'dojo-shim', location: 'node_modules/dojo-shim/dist/umd' },
+		{ name: 'dojo-core', location: 'node_modules/dojo-core' },
+		{ name: 'dojo-has', location: 'node_modules/dojo-has' },
+		{ name: 'dojo-shim', location: 'node_modules/dojo-shim' },
 		{ name: 'src', location: '_build/src' },
 		{ name: 'tests', location: '_build/tests' }
 	]
