@@ -1,6 +1,6 @@
 {
   "name": "dojo-dom",
-  "version": "2.0.0-pre",
+  "version": "2.0.0-alpha.5",
   "description": "DOM Utilities for Dojo 2",
   "homepage": "http://dojotoolkit.org",
   "bugs": {
