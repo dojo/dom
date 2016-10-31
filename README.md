@@ -8,6 +8,8 @@ The `dojo-dom` package provides utilities for DOM manipulation and event handlin
 It encourages (and shims) standard DOM methods where possible, but also provides utilities to make
 common and recommended use cases easy and obvious, and harder use cases less painful.
 
+**WARNING** This is *alpha* software. It is not yet production ready, so you should use at your own risk.
+
 ## Features
 
 ### DOM Manipulation
