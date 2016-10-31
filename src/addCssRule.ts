@@ -1,4 +1,4 @@
-import { Handle } from 'dojo-core/interfaces';
+import { Handle } from 'dojo-interfaces/core';
 
 // The stylesheet that addCssRule adds rules to
 let extraSheet: CSSStyleSheet;
