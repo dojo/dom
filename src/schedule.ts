@@ -1,4 +1,4 @@
-import { Handle } from 'dojo-core/interfaces';
+import { Handle } from 'dojo-interfaces/core';
 import { queueAnimationTask, QueueItem } from 'dojo-core/queue';
 
 const readQueue: QueueItem[] = [];

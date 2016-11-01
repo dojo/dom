@@ -68,7 +68,7 @@ export function applyFeatureClass(...features: string[]) {
  * @return the element with a matching ID attribute if found, otherwise null
  *
  * @example
- * var element = dom.byId('anElement');
+ * let element = dom.byId('anElement');
  */
 export function byId(id: string): HTMLElement | null {
 	return document.getElementById(id);
@@ -106,13 +106,13 @@ export function contains(parent: Element, node: Node): boolean {
  * @return The created Element, with any passed properties/attributes applied
  *
  * @example
- * var div = dom.create('div', { className: 'loaded', attributes: { 'data-index': '1' } });
+ * let div = dom.create('div', { className: 'loaded', attributes: { 'data-index': '1' } });
  *
  * @example
- * var div = dom.create('ul', null, [ dom.create('li'), dom.create('li') ]);
+ * let div = dom.create('ul', null, [ dom.create('li'), dom.create('li') ]);
  *
  * @example
- * var div = dom.create('div', null, [ 'hello', ' ', 'world' ]);
+ * let div = dom.create('div', null, [ 'hello', ' ', 'world' ]);
  */
 
 export let create: CreateFunction = function (
@@ -175,7 +175,7 @@ for (const param in tagWrap) {
  * @param className The CSS class name to check for
  *
  * @example
- * var hasLoaded = dom.containsClass(document.body, 'loaded');
+ * let hasLoaded = dom.containsClass(document.body, 'loaded');
  */
 export function containsClass(element: HTMLElement, className: string): boolean | void {
 	let targetElement = <any> element;
@@ -194,13 +194,13 @@ export function containsClass(element: HTMLElement, className: string): boolean 
  * @return DocumentFragment containing childNodes based on html string
  *
  * @example
- * var fragment = dom.fromString('<div></div>');
+ * let fragment = dom.fromString('<div></div>');
  *
  * @example
- * var fragment = dom.fromString('<div></div><span></span>');
+ * let fragment = dom.fromString('<div></div><span></span>');
  *
  * @example
- * var fragment = dom.fromString('<tr>');
+ * let fragment = dom.fromString('<tr>');
  */
 export function fromString(html: string): DocumentFragment  {
 	let fragment: DocumentFragment;

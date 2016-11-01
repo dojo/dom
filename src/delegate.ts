@@ -1,4 +1,4 @@
-import { Handle } from 'dojo-core/interfaces';
+import { Handle } from 'dojo-interfaces/core';
 import on from 'dojo-core/on';
 import has from './has';
 

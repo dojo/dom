@@ -1,6 +1,6 @@
 import registerSuite = require('intern!object');
 import assert = require('intern/chai!assert');
-import { read, write } from 'src/schedule';
+import { read, write } from '../../src/schedule';
 import Promise from 'dojo-shim/Promise';
 
 registerSuite({
