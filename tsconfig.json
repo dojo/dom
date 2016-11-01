@@ -1,5 +1,5 @@
 {
-	"version": "2.0.2",
+	"version": "2.0.3",
 	"compilerOptions": {
 		"declaration": false,
 		"experimentalDecorators": true,
@@ -17,5 +17,10 @@
 		"./src/**/*.ts",
 		"./tests/**/*.ts",
 		"./typings/index.d.ts"
+	],
+	"exclude": [
+		"_build",
+		"dist",
+		"node_modules"
 	]
 }

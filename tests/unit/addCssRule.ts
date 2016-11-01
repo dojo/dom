@@ -1,6 +1,6 @@
 import registerSuite = require('intern!object');
 import assert = require('intern/chai!assert');
-import addCssRule, { CssRuleHandle } from 'src/addCssRule';
+import addCssRule, { CssRuleHandle } from '../../src/addCssRule';
 
 registerSuite({
 	name: 'addCssRule',

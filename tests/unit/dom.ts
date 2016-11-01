@@ -1,8 +1,8 @@
 import registerSuite = require('intern!object');
 import assert = require('intern/chai!assert');
 import { add as hasAdd, testCache as hasCache } from 'dojo-has/has';
-import * as dom from 'src/dom';
-import { CreateArgs } from 'src/interfaces';
+import * as dom from '../../src/dom';
+import { CreateArgs } from '../../src/interfaces';
 
 let element: HTMLElement;
 

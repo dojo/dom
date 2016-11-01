@@ -1,6 +1,6 @@
 import registerSuite = require('intern!object');
 import assert = require('intern/chai!assert');
-import * as form from 'src/form';
+import * as form from '../../src/form';
 
 type FormValue = { [ key: string ]: any };
 
