@@ -8,9 +8,6 @@ env:
   - SAUCE_ACCESS_KEY: e92610e3-834e-4bec-a3b5-6f7b9d874601
   - BROWSERSTACK_USERNAME: dtktestaccount1
   - BROWSERSTACK_ACCESS_KEY: mG2qbEFJCZY2qLsM7yfx
-cache:
-  directories:
-  - node_modules
 install:
 - npm install grunt-cli
 - npm install
