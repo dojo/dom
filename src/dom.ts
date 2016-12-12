@@ -246,7 +246,7 @@ export function fromString(html: string): DocumentFragment  {
 		}
 
 		fragment = document.createDocumentFragment();
-		let firstChild: Node;
+		let firstChild: Node | null = null;
 		while (firstChild = master.firstChild) {
 			fragment.appendChild(firstChild);
 		}
@@ -277,7 +277,7 @@ export enum Position {
  * dom.place(node, dom.Position.After, anotherNode);
  */
 export function place(node: Node, position: Position, relativeElement: Element): void {
-	let parent: Node;
+	let parent: Node | null ;
 
 	if (position === Position.After || position === Position.Before || position === Position.Replace) {
 		parent = relativeElement.parentNode;

@@ -147,8 +147,8 @@ registerSuite({
 		'string children are appended as Text nodes to element'() {
 			let element = dom.create('div', <any> null, [ 'test1', 'test2' ]);
 			assert.strictEqual(element.childNodes.length, 2);
-			assert.strictEqual(element.firstChild.nodeName, '#text');
-			assert.strictEqual(element.lastChild.nodeName, '#text');
+			assert.strictEqual(element.firstChild!.nodeName, '#text');
+			assert.strictEqual(element.lastChild!.nodeName, '#text');
 		},
 
 		'children are appended to element'() {
@@ -410,21 +410,21 @@ registerSuite({
 				// Single
 				let html = '<' + tagName + '>' + (selfClosing ? '' : '</' + tagName + '>');
 				let fragment = dom.fromString(html);
-				assert.strictEqual(fragment.firstChild.nodeName, tagName.toUpperCase());
+				assert.strictEqual(fragment.firstChild!.nodeName, tagName.toUpperCase());
 
 				// Multiple
 				html += html;
 				fragment = dom.fromString(html);
 				assert.strictEqual(fragment.childNodes.length, 2);
-				assert.strictEqual(fragment.firstChild.nodeName, tagName.toUpperCase());
-				assert.strictEqual(fragment.lastChild.nodeName, tagName.toUpperCase());
+				assert.strictEqual(fragment.firstChild!.nodeName, tagName.toUpperCase());
+				assert.strictEqual(fragment.lastChild!.nodeName, tagName.toUpperCase());
 			};
 		}
 
 		const tests: any = {
 			'returns document fragment for single node'() {
 				let result = dom.fromString('<div></div>');
-				assert.strictEqual(result.firstChild.nodeName, 'DIV');
+				assert.strictEqual(result.firstChild!.nodeName, 'DIV');
 				assert.strictEqual(result.nodeName, '#document-fragment');
 			},
 
@@ -468,8 +468,8 @@ registerSuite({
 			let text = 'test';
 			let result = dom.fromString(text);
 			assert.strictEqual(result.nodeName, '#document-fragment');
-			assert.strictEqual(result.firstChild.nodeName, '#text');
-			assert.strictEqual(result.firstChild.nodeValue, text);
+			assert.strictEqual(result.firstChild!.nodeName, '#text');
+			assert.strictEqual(result.firstChild!.nodeValue, text);
 		};
 
 		return tests;

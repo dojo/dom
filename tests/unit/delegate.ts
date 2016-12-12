@@ -85,7 +85,7 @@ registerSuite({
 
 		container.appendChild(div);
 
-		emit(div.firstChild, {
+		emit(<any> div.firstChild, {
 			type: 'click',
 			bubbles: true,
 			cancelable: true
