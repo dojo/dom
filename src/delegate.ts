@@ -61,7 +61,7 @@ export default function delegate(target: HTMLElement, selector: string, type: an
 		}
 
 		let eventTarget = <Node> event.target;
-		if (eventTarget.nodeType !== 1) {
+		if (eventTarget.nodeType !== 1 && eventTarget.parentNode) {
 			// Text nodes don't have .matches; other node types generally aren't applicable
 			eventTarget = eventTarget.parentNode;
 		}
