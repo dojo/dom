@@ -12,7 +12,7 @@ export var proxyUrl = 'http://localhost:9000/';
 export var capabilities = {
 	'browserstack.selenium_version': '2.45.0',
 	project: 'Dojo 2',
-	name: 'dojo-dom'
+	name: '@dojo/dom'
 };
 
 // Browsers to run integration testing against. Note that version numbers must be strings if used with Sauce
@@ -35,8 +35,8 @@ export var tunnel = 'BrowserStackTunnel';
 // The desired AMD loader to use when running unit tests (client.html/client.js). Omit to use the default Dojo
 // loader
 export const loaders = {
-	'host-browser': 'node_modules/dojo-loader/loader.js',
-	'host-node': 'dojo-loader'
+	'host-browser': 'node_modules/@dojo/loader/loader.js',
+	'host-node': '@dojo/loader'
 };
 
 // Configuration options for the module loader; any AMD configuration options supported by the specified AMD loader
@@ -44,11 +44,11 @@ export const loaders = {
 export var loaderOptions = {
 	// Packages that should be registered with the loader in each testing environment
 	packages: [
-		{ name: 'dojo-core', location: 'node_modules/dojo-core' },
-		{ name: 'dojo-has', location: 'node_modules/dojo-has' },
-		{ name: 'dojo-shim', location: 'node_modules/dojo-shim' },
 		{ name: 'src', location: '_build/src' },
-		{ name: 'tests', location: '_build/tests' }
+		{ name: 'tests', location: '_build/tests' },
+		{ name: 'dojo', location: 'node_modules/intern/node_modules/dojo' },
+		{ name: 'grunt-dojo2', location: 'node_modules/grunt-dojo2'},
+		{ name: '@dojo', location: 'node_modules/@dojo' }
 	]
 };
 

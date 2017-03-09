@@ -1,4 +1,4 @@
-import { Handle } from 'dojo-interfaces/core';
+import { Handle } from '@dojo/interfaces/core';
 
 // The stylesheet that addCssRule adds rules to
 let extraSheet: CSSStyleSheet;
@@ -47,7 +47,7 @@ namespace Impl {
 		 */
 		destroy() {
 			// Remove the rule from the dynamic styesheet
-			const ruleIndex = ruleIndices[this._index];
+			const ruleIndex = ruleIndices[this._index] || 0;
 			extraSheet.deleteRule(ruleIndex);
 
 			// NOTE: This is intentionally not a splice, since the purpose of this array is
@@ -57,8 +57,9 @@ namespace Impl {
 			// Update all the rule indices that were added after the one being removed to account for the removed rule.
 			const numRules = ruleIndices.length;
 			for (let i = this._index + 1; i < numRules; i++) {
-				if (ruleIndices[i] > ruleIndex) {
-					ruleIndices[i]--;
+				const currentRuleIndex = ruleIndices[i] || 0;
+				if (currentRuleIndex > ruleIndex) {
+					ruleIndices[i] = currentRuleIndex - 1;
 				}
 			}
 

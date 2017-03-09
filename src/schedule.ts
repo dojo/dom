@@ -1,5 +1,5 @@
-import { Handle } from 'dojo-interfaces/core';
-import { queueAnimationTask, QueueItem } from 'dojo-core/queue';
+import { Handle } from '@dojo/interfaces/core';
+import { queueAnimationTask, QueueItem } from '@dojo/core/queue';
 
 const readQueue: QueueItem[] = [];
 const writeQueue: QueueItem[] = [];
