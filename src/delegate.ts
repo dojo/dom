@@ -1,5 +1,5 @@
-import { Handle } from 'dojo-interfaces/core';
-import on from 'dojo-core/on';
+import { Handle } from '@dojo/interfaces/core';
+import on from '@dojo/core/on';
 import has from './has';
 
 const matchesMethod = has('dom-element-matches') as string;

@@ -1,4 +1,4 @@
-import { add } from 'dojo-core/has';
+import { add } from '@dojo/core/has';
 
 add('dom-element-matches', function () {
 	let node = document.body;
@@ -18,5 +18,5 @@ add('dom-contextual-fragment', function() {
 	return Boolean(Range && Range.prototype.createContextualFragment);
 });
 
-export { default } from 'dojo-core/has';
-export * from 'dojo-core/has';
+export { default } from '@dojo/core/has';
+export * from '@dojo/core/has';

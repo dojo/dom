@@ -1,6 +1,6 @@
 export * from './intern';
 
-export var tunnel = 'NullTunnel';
+export var tunnel = 'SeleniumTunnel';
 export var tunnelOptions = {
 	hostname: 'localhost',
 	port: '4444'

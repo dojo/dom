@@ -1,7 +1,7 @@
 import registerSuite = require('intern!object');
 import assert = require('intern/chai!assert');
-import { emit } from 'dojo-core/on';
-import { Handle } from 'dojo-core/interfaces';
+import { emit } from '@dojo/core/on';
+import { Handle } from '@dojo/interfaces/core';
 import delegate from '../../src/delegate';
 
 let container = document.createElement('div');
