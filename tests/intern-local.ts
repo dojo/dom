@@ -1,11 +1,11 @@
 export * from './intern';
 
-export var tunnel = 'SeleniumTunnel';
-export var tunnelOptions = {
+export const tunnel = 'SeleniumTunnel';
+export const tunnelOptions = {
 	hostname: 'localhost',
 	port: '4444'
 };
 
-export var environments = [
+export const environments = [
 	{ browserName: 'chrome' }
 ];
