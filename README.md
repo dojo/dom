@@ -1,5 +1,7 @@
 # @dojo/dom
 
+**WARNING** This package is deprecated in favor of functionality found elsewhere in Dojo 2. This package is not being further developed at this time as its feature set is redundant with other capabilities.
+
 [![Build Status](https://travis-ci.org/dojo/dom.svg?branch=master)](https://travis-ci.org/dojo/dom)
 [![codecov.io](https://codecov.io/github/dojo/dom/coverage.svg?branch=master)](https://codecov.io/github/dojo/dom?branch=master)
 [![npm version](https://badge.fury.io/js/@dojo/dom.svg)](https://badge.fury.io/js/@dojo/dom)
@@ -7,8 +9,6 @@
 The `@dojo/dom` package provides utilities for DOM manipulation and event handling/delegation in browser runtimes.
 It encourages (and shims) standard DOM methods where possible, but also provides utilities to make
 common and recommended use cases easy and obvious, and harder use cases less painful.
-
-**WARNING** This is *alpha* software. It is not yet production ready, so you should use at your own risk.
 
 ## Features
 
